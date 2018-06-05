@@ -10,10 +10,16 @@ namespace RentApp.Models.Entities
     public class Pricing
     {
         [Key]
-        public int ID { get; set; }
+        public int PricingId { get; set; }
+        [Required]
         [ForeignKey("RentService")]
-        public int RentServiceID { get; set; }
-        public string CreatedBy { get; set; }
+        public int RentServiceId { get; set; }
+        [Required]
+        [ForeignKey("User")]
+        public int UserId { get; set; }
+        [Required]
         public List<Component> Components { get; set; }
+        public virtual RentService RentService { get; set; }
+        public virtual User User { get; set; }
     }
 }

@@ -9,6 +9,7 @@ namespace RentApp.Persistance.Repository
 {
     public interface IRentServiceRepository: IRepository< RentService, int>
     {
-       // IEnumerable<RentService> GetAll(int pageIndex, int pageSize);
+        // IEnumerable<RentService> GetAll(int pageIndex, int pageSize);
+        //string GetName();
     }
 }

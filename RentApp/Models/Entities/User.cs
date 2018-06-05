@@ -9,12 +9,18 @@ namespace RentApp.Models.Entities
     public class User
     {
         [Key]
-        public int ID { get; set; }
+        public int UserId { get; set; }
+        [Required]
         public string Name { get; set; }
+        [Required]
         public string Surname { get; set; }
+        [Required]
         public string Email { get; set; }
+        [Required]
         public DateTime BirthDate { get; set; }
+        [Required]
         public string DocumentPicture { get; set; }
+        [Required]
         public string Type { get; set; }
         public List<Comment> Comments { get; set; }
     }

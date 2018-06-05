@@ -10,7 +10,7 @@ namespace RentApp.Persistance
 {
     public class RADBContext : IdentityDbContext<RAIdentityUser>
     {
-        public virtual DbSet<AppUser> AppUsers { get; set; }
+       // public virtual DbSet<AppUser> AppUsers { get; set; }
         public DbSet<Service> Services { get; set; }
 
         public DbSet<Comment> Comments { get; set; }

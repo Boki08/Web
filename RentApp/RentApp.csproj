@@ -263,6 +263,7 @@
     <Compile Include="Areas\HelpPage\XmlDocumentationProvider.cs" />
     <Compile Include="Controllers\AccountController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
+    <Compile Include="Controllers\RentController.cs" />
     <Compile Include="Controllers\ServicesController.cs" />
     <Compile Include="Controllers\ValuesController.cs" />
     <Compile Include="Global.asax.cs">
@@ -272,9 +273,14 @@
     <Compile Include="Migrations\201806031439020_Initial.Designer.cs">
       <DependentUpon>201806031439020_Initial.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201806051827058_AddedRestOfModel.cs" />
+    <Compile Include="Migrations\201806051827058_AddedRestOfModel.Designer.cs">
+      <DependentUpon>201806051827058_AddedRestOfModel.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\AccountBindingModels.cs" />
     <Compile Include="Models\AccountViewModels.cs" />
+    <Compile Include="Models\Entities\AppUser.cs" />
     <Compile Include="Models\Entities\Comment.cs" />
     <Compile Include="Models\Entities\Component.cs" />
     <Compile Include="Models\Entities\Office.cs" />
@@ -282,7 +288,6 @@
     <Compile Include="Models\Entities\Order.cs" />
     <Compile Include="Models\Entities\Pricing.cs" />
     <Compile Include="Models\Entities\RAIdentityUser.cs" />
-    <Compile Include="Models\Entities\AppUser.cs" />
     <Compile Include="Models\Entities\RentService.cs" />
     <Compile Include="Models\Entities\Services.cs" />
     <Compile Include="Models\Entities\User.cs" />
@@ -358,6 +363,7 @@
     <Content Include="Views\_ViewStart.cshtml" />
     <Content Include="Views\Home\Index.cshtml" />
     <Content Include="Views\Shared\Error.cshtml" />
+    <Content Include="Views\Shared\_Layout.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
@@ -378,6 +384,9 @@
   <ItemGroup>
     <EmbeddedResource Include="Migrations\201806031439020_Initial.resx">
       <DependentUpon>201806031439020_Initial.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201806051827058_AddedRestOfModel.resx">
+      <DependentUpon>201806051827058_AddedRestOfModel.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>

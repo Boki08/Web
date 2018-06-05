@@ -10,14 +10,23 @@ namespace RentApp.Models.Entities
     public class Order
     {
         [Key]
-        public int ID { get; set; }
+        public int OrderId { get; set; }
+        [Required]
         [ForeignKey("Vehicle")]
-        public int VehicleID { get; set; }
+        public int VehicleId { get; set; }
+        [Required]
         [ForeignKey("User")]
-        public int UserID { get; set; }
+        public int UserId { get; set; }
+        [Required]
         public string DepartureOffice { get; set; }
+        [Required]
         public string ReturnOffice { get; set; }
+        [Required]
         public DateTime DepartureDate { get; set; }
+        [Required]
         public DateTime ReturnDate { get; set; }
+
+        public virtual Vehicle Vehicle { get; set; }
+        public virtual User User { get; set; }
     }
 }

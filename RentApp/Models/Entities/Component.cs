@@ -10,9 +10,13 @@ namespace RentApp.Models.Entities
     public class Component
     {
         [Key]
-        public int ID { get; set; }
+        public int ComponentId { get; set; }
+        [Required]
         [ForeignKey("Vehicle")]
-        public int VehicleID { get; set; }
+        public int VehicleId { get; set; }
+        [Required]
         public float HourlyPrice { get; set; }
+
+        public virtual Vehicle Vehicle { get; set; }
     }
 }

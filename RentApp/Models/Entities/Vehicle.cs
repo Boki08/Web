@@ -10,14 +10,21 @@ namespace RentApp.Models.Entities
     public class Vehicle
     {
         [Key]
-        public int ID { get; set; }
+        public int VehicleId { get; set; }
+        [Required]
         [ForeignKey("RentService")]
-        public int RentServiceID { get; set; }
+        public int RentServiceId { get; set; }
+        [Required]
         public string Model { get; set; }
+        [Required]
         public string YearOfManufacturing { get; set; }
+        [Required]
         public string Manufacturer { get; set; }
         public string Pictures { get; set; }
+        [Required]
         public string Description { get; set; }
+        [Required]
         public bool Available { get; set; }
+        public virtual RentService RentService { get; set; }
     }
 }

@@ -10,9 +10,13 @@ namespace RentApp.Models.Entities
     public class OfficePicture
     {
         [Key]
-        public int ID { get; set; }
+        public int OfficePictureId { get; set; }
+        [Required]
         [ForeignKey("Office")]
-        public int OfficeID { get; set; }
+        public int OfficeId { get; set; }
+        [Required]
         public string Data { get; set; }
+
+        public virtual Office Office { get; set; }
     }
 }

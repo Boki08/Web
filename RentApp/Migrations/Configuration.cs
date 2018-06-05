@@ -29,53 +29,53 @@ namespace RentApp.Migrations
             //      new Person { FullName = "Rowan Miller" }
             //    );
             //
-            if (!context.Roles.Any(r => r.Name == "Admin"))
-            {
-                var store = new RoleStore<IdentityRole>(context);
-                var manager = new RoleManager<IdentityRole>(store);
-                var role = new IdentityRole { Name = "Admin" };
+            //if (!context.Roles.Any(r => r.Name == "Admin"))
+            //{
+            //    var store = new RoleStore<IdentityRole>(context);
+            //    var manager = new RoleManager<IdentityRole>(store);
+            //    var role = new IdentityRole { Name = "Admin" };
 
-                manager.Create(role);
-            }
+            //    manager.Create(role);
+            //}
 
-            if (!context.Roles.Any(r => r.Name == "Manager"))
-            {
-                var store = new RoleStore<IdentityRole>(context);
-                var manager = new RoleManager<IdentityRole>(store);
-                var role = new IdentityRole { Name = "Manager" };
+            //if (!context.Roles.Any(r => r.Name == "Manager"))
+            //{
+            //    var store = new RoleStore<IdentityRole>(context);
+            //    var manager = new RoleManager<IdentityRole>(store);
+            //    var role = new IdentityRole { Name = "Manager" };
 
-                manager.Create(role);
-            }
+            //    manager.Create(role);
+            //}
 
-            if (!context.Roles.Any(r => r.Name == "AppUser"))
-            {
-                var store = new RoleStore<IdentityRole>(context);
-                var manager = new RoleManager<IdentityRole>(store);
-                var role = new IdentityRole { Name = "AppUser" };
+            //if (!context.Roles.Any(r => r.Name == "AppUser"))
+            //{
+            //    var store = new RoleStore<IdentityRole>(context);
+            //    var manager = new RoleManager<IdentityRole>(store);
+            //    var role = new IdentityRole { Name = "AppUser" };
 
-                manager.Create(role);
-            }
+            //    manager.Create(role);
+            //}
 
-            context.AppUsers.AddOrUpdate(
+            //context.AppUsers.AddOrUpdate(
 
-                  u => u.FullName,
+            //      u => u.FullName,
 
-                  new AppUser() { FullName = "Admin Adminovic" }
+            //      new AppUser() { FullName = "Admin Adminovic" }
 
-            );
+            //);
 
-            context.AppUsers.AddOrUpdate(
+            //context.AppUsers.AddOrUpdate(
 
-                p => p.FullName,
+            //    p => p.FullName,
 
-                new AppUser() { FullName = "AppUser AppUserovic" }
+            //    new AppUser() { FullName = "AppUser AppUserovic" }
 
-            );
+            //);
 
-            context.SaveChanges();
+            //context.SaveChanges();
 
-            var userStore = new UserStore<RAIdentityUser>(context);
-            var userManager = new UserManager<RAIdentityUser>(userStore);
+            //var userStore = new UserStore<RAIdentityUser>(context);
+            //var userManager = new UserManager<RAIdentityUser>(userStore);
 
             //if (!context.Users.Any(u => u.UserName == "admin"))
             //{
@@ -95,6 +95,25 @@ namespace RentApp.Migrations
             //    userManager.AddToRole(user.Id, "AppUser");
 
             //}
+
+
+
+            context.Services.AddOrUpdate(
+               s => s.Name,
+               new Service() { Name = "Service1" }
+           );
+            context.SaveChanges();
+
+            Service service = context.Services.Where(sr => sr.Name == "Service1").FirstOrDefault();
+            if (service != null && service.Id != 0)
+            {
+                context.RentServices.AddOrUpdate(
+                    bo => bo.Email,
+                    new RentService() { Description = "Maksimova 3", Email = "123", Logo = "456", Name = "5555" }//,
+                   // new Branch() { Address = "Balzakova 4", Latitute = 2.0, Longitude = 2.0, ServiceId = service.ServiceId }
+                );
+                context.SaveChanges();
+            }
         }
     }
 }

@@ -10,9 +10,12 @@ namespace RentApp.Models.Entities
     public class VehiclePicture
     {
         [Key]
-        public int ID { get; set; }
+        public int VehiclePictureId { get; set; }
+        [Required]
         [ForeignKey("Vehicle")]
-        public int VehicleID { get; set; }
+        public int VehicleId { get; set; }
+        [Required]
         public string Data { get; set; }
+        public virtual Vehicle Vehicle { get; set; }
     }
 }

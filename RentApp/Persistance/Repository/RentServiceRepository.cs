@@ -17,6 +17,8 @@ namespace RentApp.Persistance.Repository
        // {
        //     return DemoContext.RentServices.Skip((pageIndex - 1) * pageSize).Take(pageSize);
        // }
+      
+
 
         protected RADBContext DemoContext { get { return context as RADBContext; } }
     }

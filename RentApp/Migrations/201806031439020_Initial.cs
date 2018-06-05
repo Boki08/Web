@@ -8,94 +8,142 @@ namespace RentApp.Migrations
         public override void Up()
         {
             CreateTable(
-                "dbo.AppUsers",
+                "dbo.RentServices",
                 c => new
-                    {
-                        Id = c.Int(nullable: false, identity: true),
-                        FullName = c.String(),
-                    })
-                .PrimaryKey(t => t.Id);
-            
+                {
+                    RentServiceId = c.Int(nullable: false, identity: true),
+                    Name = c.String(nullable: false),
+                    email = c.String(nullable: false),
+                    Logo = c.String(nullable: false),
+                    Description = c.String(nullable: false),
+                    ServiceId = c.Int(nullable: false),
+                })
+                .PrimaryKey(t => t.RentServiceId);
+
             CreateTable(
-                "dbo.AspNetRoles",
+                "dbo.Comments",
                 c => new
-                    {
-                        Id = c.String(nullable: false, maxLength: 128),
-                        Name = c.String(nullable: false, maxLength: 256),
-                    })
-                .PrimaryKey(t => t.Id)
-                .Index(t => t.Name, unique: true, name: "RoleNameIndex");
-            
-            CreateTable(
-                "dbo.AspNetUserRoles",
-                c => new
-                    {
-                        UserId = c.String(nullable: false, maxLength: 128),
-                        RoleId = c.String(nullable: false, maxLength: 128),
-                    })
-                .PrimaryKey(t => new { t.UserId, t.RoleId })
-                .ForeignKey("dbo.AspNetRoles", t => t.RoleId, cascadeDelete: true)
-                .ForeignKey("dbo.AspNetUsers", t => t.UserId, cascadeDelete: true)
+                {
+                    CommentId = c.Int(nullable: false, identity: true),
+                    Name = c.String(nullable: false),
+                    UserId = c.Int(nullable: false),
+                    OrderId = c.Int(nullable: false),
+                    Review = c.String(nullable: false),
+                    Grade = c.Int(nullable: false)
+                })
+                 .PrimaryKey(t => t.CommentId)
+                .ForeignKey("dbo.Users", t => t.UserId)
+                .ForeignKey("dbo.Orders", t => t.OrderId)
                 .Index(t => t.UserId)
-                .Index(t => t.RoleId);
-            
+                .Index(t => t.OrderId);
+
+
             CreateTable(
-                "dbo.Services",
+                "dbo.Offices",
                 c => new
                     {
-                        Id = c.Int(nullable: false, identity: true),
-                        Name = c.String(),
+                    OfficeId = c.Int(nullable: false),
+                        RentServiceId = c.Int(nullable: false),
+                        Address = c.String(nullable: false),
+                        Latitude = c.Double(nullable: false),
+                        Longitude = c.Double(nullable: false),
                     })
-                .PrimaryKey(t => t.Id);
+                .PrimaryKey(t => t.OfficeId)
+                .ForeignKey("dbo.RentServices", t => t.RentServiceId)
+                .Index(t => t.RentServiceId);
             
             CreateTable(
-                "dbo.AspNetUsers",
+                "dbo.OfficePictures",
                 c => new
                     {
-                        Id = c.String(nullable: false, maxLength: 128),
-                        AppUserId = c.Int(nullable: false),
-                        Email = c.String(maxLength: 256),
-                        EmailConfirmed = c.Boolean(nullable: false),
-                        PasswordHash = c.String(),
-                        SecurityStamp = c.String(),
-                        PhoneNumber = c.String(),
-                        PhoneNumberConfirmed = c.Boolean(nullable: false),
-                        TwoFactorEnabled = c.Boolean(nullable: false),
-                        LockoutEndDateUtc = c.DateTime(),
-                        LockoutEnabled = c.Boolean(nullable: false),
-                        AccessFailedCount = c.Int(nullable: false),
-                        UserName = c.String(nullable: false, maxLength: 256),
+                    OfficePictureId = c.Int(nullable: false),
+                        OfficeId = c.Int(nullable: false),
+                        Data = c.String(nullable: false),
                     })
-                .PrimaryKey(t => t.Id)
-                .ForeignKey("dbo.AppUsers", t => t.AppUserId, cascadeDelete: true)
-                .Index(t => t.AppUserId)
-                .Index(t => t.UserName, unique: true, name: "UserNameIndex");
-            
+                  .PrimaryKey(t => t.OfficePictureId)
+                .ForeignKey("dbo.Offices", t => t.OfficeId)
+                .Index(t => t.OfficeId);
+
             CreateTable(
-                "dbo.AspNetUserClaims",
+                "dbo.Orders",
                 c => new
                     {
-                        Id = c.Int(nullable: false, identity: true),
-                        UserId = c.String(nullable: false, maxLength: 128),
-                        ClaimType = c.String(),
-                        ClaimValue = c.String(),
+
+                       OrderId = c.Int(nullable: false),
+                       VehicleId = c.Int(nullable: false),
+                       UserId = c.Int(nullable: false),
+                       DepartureOffice = c.String(nullable: false),
+                       ReturnOffice = c.String(nullable: false),
+                       DepartureDate = c.DateTime(nullable: false),
+                       ReturnDate = c.DateTime(nullable: false),
                     })
-                .PrimaryKey(t => t.Id)
-                .ForeignKey("dbo.AspNetUsers", t => t.UserId, cascadeDelete: true)
+                .PrimaryKey(t => t.OrderId)
+                .ForeignKey("dbo.Vehicles", t => t.VehicleId)
+                 .ForeignKey("dbo.Users", t => t.UserId)
+                .Index(t => t.VehicleId)
                 .Index(t => t.UserId);
             
             CreateTable(
-                "dbo.AspNetUserLogins",
+                "dbo.Pricings",
                 c => new
                     {
-                        LoginProvider = c.String(nullable: false, maxLength: 128),
-                        ProviderKey = c.String(nullable: false, maxLength: 128),
-                        UserId = c.String(nullable: false, maxLength: 128),
-                    })
-                .PrimaryKey(t => new { t.LoginProvider, t.ProviderKey, t.UserId })
-                .ForeignKey("dbo.AspNetUsers", t => t.UserId, cascadeDelete: true)
+                    PricingId = c.Int(nullable: false),
+                        RentServiceId = c.Int(nullable: false),
+                        UserId = c.Int(nullable: false),
+
+                })
+                .PrimaryKey(t => t.PricingId)
+                .ForeignKey("dbo.RentServices", t => t.RentServiceId)
+                .ForeignKey("dbo.Users", t => t.UserId)
+                .Index(t => t.RentServiceId)
                 .Index(t => t.UserId);
-            
+
+            CreateTable(
+                "dbo.Users",
+                c => new
+                {
+                    UserId = c.Int(nullable: false),
+                    Name = c.String(nullable: false),
+                    Surname = c.String(nullable: false),
+                    Email = c.String(nullable: false),
+                    BirthDate = c.DateTime(nullable: false),
+                    DocumentPicture = c.String(nullable: false),
+                    Type = c.Int(nullable: false),
+                })
+                .PrimaryKey(t => t.UserId);
+
+            CreateTable(
+               "dbo.Vehicles",
+               c => new
+               {
+
+                   VehicleId = c.Int(nullable: false),
+                    RentServiceId = c.Int(nullable: false),
+                    Model = c.String(nullable: false),
+                    YearOfManufacturing = c.Int(nullable: false),
+                    Manufacturer = c.String(nullable: false),
+                    Description = c.String(nullable: false),
+                    Available = c.Boolean(nullable: false),
+
+               })
+               .PrimaryKey(t =>t.VehicleId)
+               .ForeignKey("dbo.RentServices", t => t.RentServiceId)
+               .Index(t => t.RentServiceId);
+
+
+
+            CreateTable(
+               "dbo.VehiclePictures",
+               c => new
+               {
+                   VehiclePictureId = c.Int(nullable: false),
+                   VehicleId = c.Int(nullable: false),
+                   Data = c.String(nullable: false),
+               })
+               .PrimaryKey(t =>t.VehiclePictureId)
+               .ForeignKey("dbo.Vehicles", t => t.VehicleId)
+               .Index(t => t.VehicleId);
+
         }
         
         public override void Down()

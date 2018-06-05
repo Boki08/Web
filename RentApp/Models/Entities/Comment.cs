@@ -10,10 +10,17 @@ namespace RentApp.Models.Entities
     public class Comment
     {
         [Key]
-        public int ID { get; set; }
+        public int CommentId { get; set; }
         [ForeignKey("User")]
-        public int UserID { get; set; }
+        public int UserId { get; set; }
+        [ForeignKey("Order")]
+        public int OrderId { get; set; }
+        [Required]
         public string Review { get; set; }
+        [Required]
         public int Grade { get; set; }
+
+        public virtual User User { get; set; }
+        public virtual Order Order { get; set; }
     }
 }
