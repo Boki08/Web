@@ -32,7 +32,7 @@ namespace RentApp.Controllers
 
 
         [HttpGet]
-        [Route("")]
+        [Route("comments")]
         public IEnumerable<Comment> getComments()
         {
             return unitOfWork.Comments.GetAll();
@@ -40,7 +40,7 @@ namespace RentApp.Controllers
 
         // GET: api/Comments/5/3
         [HttpGet]
-        [Route("comments/{id1}/{id2}")]
+        [Route("getComments/{id1}/{id2}")]
         [ResponseType(typeof(Comment))]
         public IHttpActionResult GetComment(int id1, int id2)
         {
@@ -54,7 +54,7 @@ namespace RentApp.Controllers
         }
 
         [HttpPost]
-        [Route("Comments")]
+        [Route("postComments")]
         [ResponseType(typeof(Comment))]
         public IHttpActionResult postComment(Comment comment)
         {

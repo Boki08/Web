@@ -274,9 +274,11 @@
     <Compile Include="Controllers\AppUserController.cs" />
     <Compile Include="Controllers\CommentController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
+    <Compile Include="Controllers\OrderController.cs" />
     <Compile Include="Controllers\RentController.cs" />
     <Compile Include="Controllers\ServicesController.cs" />
     <Compile Include="Controllers\ValuesController.cs" />
+    <Compile Include="Controllers\VehicleController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
@@ -312,9 +314,11 @@
     <Compile Include="Persistance\Repository\IOrderRepository.cs" />
     <Compile Include="Persistance\Repository\IRentServiceRepository.cs" />
     <Compile Include="Persistance\Repository\IRepository.cs" />
+    <Compile Include="Persistance\Repository\IVehicleRepository.cs" />
     <Compile Include="Persistance\Repository\OrderRepository.cs" />
     <Compile Include="Persistance\Repository\RentServiceRepository.cs" />
     <Compile Include="Persistance\Repository\Repository.cs" />
+    <Compile Include="Persistance\Repository\VehicleRepository.cs" />
     <Compile Include="Persistance\UnitOfWork\DemoUnitOfWork.cs" />
     <Compile Include="Persistance\UnitOfWork\IUnitOfWork.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

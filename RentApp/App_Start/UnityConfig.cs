@@ -4,9 +4,11 @@ using Microsoft.Owin.Security;
 using RentApp.Models.Entities;
 using RentApp.Persistance;
 using RentApp.Persistance.Repository;
+using RentApp.Persistance.UnitOfWork;
 using RentApp.Providers;
 using System;
 using System.Data.Entity;
+using System.Web.Http;
 using Unity;
 using Unity.AspNet.Mvc;
 using Unity.Injection;
@@ -23,6 +25,7 @@ namespace RentApp
           new Lazy<IUnityContainer>(() =>
           {
               var container = new UnityContainer();
+              
               RegisterTypes(container);
               return container;
           });
@@ -53,11 +56,19 @@ namespace RentApp
             // container.RegisterType<IProductRepository, ProductRepository>();
             container.RegisterType<DbContext, RADBContext>(new PerRequestLifetimeManager());
             container.RegisterType<ApplicationUserManager>();
+            container.RegisterType<IUnitOfWork, DemoUnitOfWork>();
 
             container.RegisterType<IRentServiceRepository, RentServiceRepository>();
             container.RegisterType<ICommentRepository, CommentRepository>();
             container.RegisterType<IAppUserRepository, AppUserRepository>();
             container.RegisterType<IOrderRepository, OrderRepository>();
+            container.RegisterType<IVehicleRepository, VehicleRepository>();
+
+
+          
+
+
+
 
             container.RegisterType<ISecureDataFormat<AuthenticationTicket>, CustomJwtFormat>(new InjectionConstructor("http://localhost:51680"));
             container.RegisterType<IUserStore<RAIdentityUser>, UserStore<RAIdentityUser>>(

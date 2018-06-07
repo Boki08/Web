@@ -21,7 +21,9 @@ namespace RentApp.Persistance.UnitOfWork
         public IAppUserRepository AppUsers { get; set; }
         [Dependency]
         public IOrderRepository Orders { get; set; }
-        
+        [Dependency]
+        public IVehicleRepository Vehicles { get; set; }
+
         public DemoUnitOfWork(DbContext context)
         {
             _context = context;
