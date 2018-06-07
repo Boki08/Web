@@ -20,7 +20,7 @@ namespace RentApp.Persistance
         public DbSet<Order> Orders { get; set; }
         public DbSet<Pricing> Pricings { get; set; }
         public DbSet<RentService> RentServices { get; set; }
-        public DbSet<User> Users { get; set; }
+        public DbSet<AppUser> AppUsers { get; set; }
         public DbSet<Vehicle> Vehicles { get; set; }
         public DbSet<VehiclePicture> VehiclePictures { get; set; }
 

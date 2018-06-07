@@ -18,6 +18,7 @@ namespace RentApp.Models.Entities
         public string Logo { get; set; }
         [Required]
         public string Description { get; set; }
+        public double Grade { get; set; }
 
         public List<Order> Orders { get; set; }
         public List<Office> Offices { get; set; }

@@ -13,8 +13,15 @@ namespace RentApp.Persistance.UnitOfWork
         private readonly DbContext _context;
       
         [Dependency]
-        public IRentServiceRepository Services { get; set; }
+        public IRentServiceRepository RentServices { get; set; }
 
+        [Dependency]
+        public ICommentRepository Comments { get; set; }
+        [Dependency]
+        public IAppUserRepository AppUsers { get; set; }
+        [Dependency]
+        public IOrderRepository Orders { get; set; }
+        
         public DemoUnitOfWork(DbContext context)
         {
             _context = context;

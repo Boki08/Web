@@ -27,6 +27,6 @@ namespace RentApp.Models.Entities
         public DateTime ReturnDate { get; set; }
 
         public virtual Vehicle Vehicle { get; set; }
-        public virtual User User { get; set; }
+        public virtual AppUser User { get; set; }
     }
 }

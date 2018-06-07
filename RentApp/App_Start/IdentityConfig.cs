@@ -14,6 +14,7 @@ namespace RentApp
 
     public class ApplicationUserManager : UserManager<RAIdentityUser>
     {
+
         public ApplicationUserManager(IUserStore<RAIdentityUser> store)
             : base(store)
         {

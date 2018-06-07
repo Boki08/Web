@@ -20,7 +20,7 @@ namespace RentApp.Models.Entities
         [Required]
         public int Grade { get; set; }
 
-        public virtual User User { get; set; }
+        public virtual AppUser User { get; set; }
         public virtual Order Order { get; set; }
     }
 }

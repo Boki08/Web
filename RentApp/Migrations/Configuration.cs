@@ -6,7 +6,9 @@ namespace RentApp.Migrations
     using System;
     using System.Data.Entity;
     using System.Data.Entity.Migrations;
+    using System.Data.Entity.Validation;
     using System.Linq;
+    using System.Text;
 
     internal sealed class Configuration : DbMigrationsConfiguration<RentApp.Persistance.RADBContext>
     {
@@ -95,24 +97,94 @@ namespace RentApp.Migrations
             //    userManager.AddToRole(user.Id, "AppUser");
 
             //}
-
-
-
-            context.Services.AddOrUpdate(
-               s => s.Name,
-               new Service() { Name = "Service1" }
-           );
-            context.SaveChanges();
-
-            Service service = context.Services.Where(sr => sr.Name == "Service1").FirstOrDefault();
-            if (service != null && service.Id != 0)
+            if (!context.Roles.Any(r => r.Name == "Admin"))
             {
-                context.RentServices.AddOrUpdate(
-                    bo => bo.Email,
-                    new RentService() { Description = "Maksimova 3", Email = "123", Logo = "456", Name = "5555" }//,
-                   // new Branch() { Address = "Balzakova 4", Latitute = 2.0, Longitude = 2.0, ServiceId = service.ServiceId }
-                );
+                var store = new RoleStore<IdentityRole>(context);
+                var manager = new RoleManager<IdentityRole>(store);
+                var role = new IdentityRole { Name = "Admin" };
+
+                manager.Create(role);
+            }
+
+            if (!context.Roles.Any(r => r.Name == "Manager"))
+            {
+                var store = new RoleStore<IdentityRole>(context);
+                var manager = new RoleManager<IdentityRole>(store);
+                var role = new IdentityRole { Name = "Manager" };
+
+                manager.Create(role);
+            }
+
+            if (!context.Roles.Any(r => r.Name == "AppUser"))
+            {
+                var store = new RoleStore<IdentityRole>(context);
+                var manager = new RoleManager<IdentityRole>(store);
+                var role = new IdentityRole { Name = "AppUser" };
+
+                manager.Create(role);
+            }
+
+            context.AppUsers.AddOrUpdate(
+
+                  u => u.Name,
+
+                  new AppUser() { Name = "Admin Adminovic",  Email = "admin@yahoo.com",  BirthDate=DateTime.Parse("1/1/2000"),DocumentPicture="123",Surname="asd",Type="3" }
+
+            );
+
+            context.AppUsers.AddOrUpdate(
+
+                p => p.Name,
+
+                new AppUser() { Name = "AppUser AppUserovic", Email = "user@yahoo.com", BirthDate = DateTime.Parse("1/1/2001"), DocumentPicture = "11", Surname = "asdgg", Type = "1" }
+
+            );
+            try
+            {
                 context.SaveChanges();
+            }
+            catch (DbEntityValidationException ex)
+            {
+                StringBuilder sb = new StringBuilder();
+
+                foreach (var failure in ex.EntityValidationErrors)
+                {
+                    sb.AppendFormat("{0} failed validation\n", failure.Entry.Entity.GetType());
+                    foreach (var error in failure.ValidationErrors)
+                    {
+                        sb.AppendFormat("- {0} : {1}", error.PropertyName, error.ErrorMessage);
+                        sb.AppendLine();
+                    }
+                }
+
+                throw new DbEntityValidationException(
+                    "Entity Validation Failed - errors follow:\n" +
+                    sb.ToString(), ex
+                ); // Add the original exception as the innerException
+            }
+           // context.SaveChanges();
+
+
+            var userStore = new UserStore<RAIdentityUser>(context);
+            var userManager = new UserManager<RAIdentityUser>(userStore);
+
+            if (!context.Users.Any(u => u.UserName == "admin"))
+            {
+                var _appUser = context.AppUsers.FirstOrDefault(a => a.Name == "Admin Adminovic");
+                var user = new RAIdentityUser() { Id = "admin", UserName = "admin", Email = "admin@yahoo.com", PasswordHash = RAIdentityUser.HashPassword("admin"), AppUserId = _appUser.UserId };
+                userManager.Create(user);
+                userManager.AddToRole(user.Id, "Admin");
+            }
+
+            if (!context.Users.Any(u => u.UserName == "appu"))
+
+            {
+
+                var _appUser = context.AppUsers.FirstOrDefault(a => a.Name == "AppUser AppUserovic");
+                var user = new RAIdentityUser() { Id = "appu", UserName = "appu", Email = "appu@yahoo.com", PasswordHash = RAIdentityUser.HashPassword("appu"), AppUserId = _appUser.UserId };
+                userManager.Create(user);
+                userManager.AddToRole(user.Id, "AppUser");
+
             }
         }
     }

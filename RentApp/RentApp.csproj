@@ -50,6 +50,12 @@
       <HintPath>..\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.1.0.8\lib\net45\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Microsoft.Data.Edm, Version=5.8.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Data.Edm.5.8.3\lib\net40\Microsoft.Data.Edm.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Data.OData, Version=5.8.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Data.OData.5.8.3\lib\net40\Microsoft.Data.OData.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.Owin.Security.Jwt, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Owin.Security.Jwt.3.0.0\lib\net45\Microsoft.Owin.Security.Jwt.dll</HintPath>
     </Reference>
@@ -62,6 +68,9 @@
     </Reference>
     <Reference Include="System.Net.Http.Formatting, Version=5.2.6.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.AspNet.WebApi.Client.5.2.6\lib\net45\System.Net.Http.Formatting.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Spatial, Version=5.8.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Spatial.5.8.3\lib\net40\System.Spatial.dll</HintPath>
     </Reference>
     <Reference Include="System.Web.Cors, Version=5.2.6.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.AspNet.Cors.5.2.6\lib\net45\System.Web.Cors.dll</HintPath>
@@ -262,6 +271,8 @@
     <Compile Include="Areas\HelpPage\SampleGeneration\TextSample.cs" />
     <Compile Include="Areas\HelpPage\XmlDocumentationProvider.cs" />
     <Compile Include="Controllers\AccountController.cs" />
+    <Compile Include="Controllers\AppUserController.cs" />
+    <Compile Include="Controllers\CommentController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\RentController.cs" />
     <Compile Include="Controllers\ServicesController.cs" />
@@ -269,18 +280,17 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
-    <Compile Include="Migrations\201806031439020_Initial.cs" />
-    <Compile Include="Migrations\201806031439020_Initial.Designer.cs">
-      <DependentUpon>201806031439020_Initial.cs</DependentUpon>
+    <Compile Include="Migrations\201806061050150_UserChanges.cs" />
+    <Compile Include="Migrations\201806061050150_UserChanges.Designer.cs">
+      <DependentUpon>201806061050150_UserChanges.cs</DependentUpon>
     </Compile>
-    <Compile Include="Migrations\201806051827058_AddedRestOfModel.cs" />
-    <Compile Include="Migrations\201806051827058_AddedRestOfModel.Designer.cs">
-      <DependentUpon>201806051827058_AddedRestOfModel.cs</DependentUpon>
+    <Compile Include="Migrations\201806062112124_ServiceGrade.cs" />
+    <Compile Include="Migrations\201806062112124_ServiceGrade.Designer.cs">
+      <DependentUpon>201806062112124_ServiceGrade.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\AccountBindingModels.cs" />
     <Compile Include="Models\AccountViewModels.cs" />
-    <Compile Include="Models\Entities\AppUser.cs" />
     <Compile Include="Models\Entities\Comment.cs" />
     <Compile Include="Models\Entities\Component.cs" />
     <Compile Include="Models\Entities\Office.cs" />
@@ -290,13 +300,19 @@
     <Compile Include="Models\Entities\RAIdentityUser.cs" />
     <Compile Include="Models\Entities\RentService.cs" />
     <Compile Include="Models\Entities\Services.cs" />
-    <Compile Include="Models\Entities\User.cs" />
+    <Compile Include="Models\Entities\AppUser.cs" />
     <Compile Include="Models\Entities\Vehicle.cs" />
     <Compile Include="Models\Entities\VehiclePicture.cs" />
     <Compile Include="Persistance\DemoContext.cs" />
     <Compile Include="Persistance\RADBContext.cs" />
+    <Compile Include="Persistance\Repository\AppUserRepository.cs" />
+    <Compile Include="Persistance\Repository\CommentRepository.cs" />
+    <Compile Include="Persistance\Repository\IAppUserRepository.cs" />
+    <Compile Include="Persistance\Repository\ICommentRepository.cs" />
+    <Compile Include="Persistance\Repository\IOrderRepository.cs" />
     <Compile Include="Persistance\Repository\IRentServiceRepository.cs" />
     <Compile Include="Persistance\Repository\IRepository.cs" />
+    <Compile Include="Persistance\Repository\OrderRepository.cs" />
     <Compile Include="Persistance\Repository\RentServiceRepository.cs" />
     <Compile Include="Persistance\Repository\Repository.cs" />
     <Compile Include="Persistance\UnitOfWork\DemoUnitOfWork.cs" />
@@ -382,11 +398,11 @@
     <Content Include="Scripts\jquery-1.10.2.min.map" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Migrations\201806031439020_Initial.resx">
-      <DependentUpon>201806031439020_Initial.cs</DependentUpon>
+    <EmbeddedResource Include="Migrations\201806061050150_UserChanges.resx">
+      <DependentUpon>201806061050150_UserChanges.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201806051827058_AddedRestOfModel.resx">
-      <DependentUpon>201806051827058_AddedRestOfModel.cs</DependentUpon>
+    <EmbeddedResource Include="Migrations\201806062112124_ServiceGrade.resx">
+      <DependentUpon>201806062112124_ServiceGrade.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>

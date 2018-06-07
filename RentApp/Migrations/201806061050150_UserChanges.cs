@@ -3,10 +3,24 @@ namespace RentApp.Migrations
     using System;
     using System.Data.Entity.Migrations;
     
-    public partial class AddedRestOfModel : DbMigration
+    public partial class UserChanges : DbMigration
     {
         public override void Up()
         {
+            CreateTable(
+                "dbo.AppUsers",
+                c => new
+                    {
+                        UserId = c.Int(nullable: false, identity: true),
+                        Name = c.String(nullable: false),
+                        Surname = c.String(nullable: false),
+                        Email = c.String(nullable: false),
+                        BirthDate = c.DateTime(nullable: false),
+                        DocumentPicture = c.String(nullable: false),
+                        Type = c.String(nullable: false),
+                    })
+                .PrimaryKey(t => t.UserId);
+            
             CreateTable(
                 "dbo.Comments",
                 c => new
@@ -19,7 +33,7 @@ namespace RentApp.Migrations
                     })
                 .PrimaryKey(t => t.CommentId)
                 .ForeignKey("dbo.Orders", t => t.OrderId, cascadeDelete: true)
-                .ForeignKey("dbo.Users", t => t.UserId, cascadeDelete: true)
+                .ForeignKey("dbo.AppUsers", t => t.UserId, cascadeDelete: false)
                 .Index(t => t.UserId)
                 .Index(t => t.OrderId);
             
@@ -37,26 +51,12 @@ namespace RentApp.Migrations
                         RentService_RentServiceId = c.Int(),
                     })
                 .PrimaryKey(t => t.OrderId)
-                .ForeignKey("dbo.Users", t => t.UserId, cascadeDelete: true)
+                .ForeignKey("dbo.AppUsers", t => t.UserId, cascadeDelete: false)
                 .ForeignKey("dbo.RentServices", t => t.RentService_RentServiceId)
                 .ForeignKey("dbo.Vehicles", t => t.VehicleId, cascadeDelete: true)
                 .Index(t => t.VehicleId)
                 .Index(t => t.UserId)
                 .Index(t => t.RentService_RentServiceId);
-            
-            CreateTable(
-                "dbo.Users",
-                c => new
-                    {
-                        UserId = c.Int(nullable: false, identity: true),
-                        Name = c.String(nullable: false),
-                        Surname = c.String(nullable: false),
-                        Email = c.String(nullable: false),
-                        BirthDate = c.DateTime(nullable: false),
-                        DocumentPicture = c.String(nullable: false),
-                        Type = c.String(nullable: false),
-                    })
-                .PrimaryKey(t => t.UserId);
             
             CreateTable(
                 "dbo.Vehicles",
@@ -138,8 +138,88 @@ namespace RentApp.Migrations
                     })
                 .PrimaryKey(t => t.PricingId)
                 .ForeignKey("dbo.RentServices", t => t.RentServiceId, cascadeDelete: true)
-                .ForeignKey("dbo.Users", t => t.UserId, cascadeDelete: true)
+                .ForeignKey("dbo.AppUsers", t => t.UserId, cascadeDelete: false)
                 .Index(t => t.RentServiceId)
+                .Index(t => t.UserId);
+            
+            CreateTable(
+                "dbo.AspNetRoles",
+                c => new
+                    {
+                        Id = c.String(nullable: false, maxLength: 128),
+                        Name = c.String(nullable: false, maxLength: 256),
+                    })
+                .PrimaryKey(t => t.Id)
+                .Index(t => t.Name, unique: true, name: "RoleNameIndex");
+            
+            CreateTable(
+                "dbo.AspNetUserRoles",
+                c => new
+                    {
+                        UserId = c.String(nullable: false, maxLength: 128),
+                        RoleId = c.String(nullable: false, maxLength: 128),
+                    })
+                .PrimaryKey(t => new { t.UserId, t.RoleId })
+                .ForeignKey("dbo.AspNetRoles", t => t.RoleId, cascadeDelete: true)
+                .ForeignKey("dbo.AspNetUsers", t => t.UserId, cascadeDelete: true)
+                .Index(t => t.UserId)
+                .Index(t => t.RoleId);
+            
+            CreateTable(
+                "dbo.Services",
+                c => new
+                    {
+                        Id = c.Int(nullable: false, identity: true),
+                        Name = c.String(),
+                    })
+                .PrimaryKey(t => t.Id);
+            
+            CreateTable(
+                "dbo.AspNetUsers",
+                c => new
+                    {
+                        Id = c.String(nullable: false, maxLength: 128),
+                        AppUserId = c.Int(nullable: false),
+                        Email = c.String(maxLength: 256),
+                        EmailConfirmed = c.Boolean(nullable: false),
+                        PasswordHash = c.String(),
+                        SecurityStamp = c.String(),
+                        PhoneNumber = c.String(),
+                        PhoneNumberConfirmed = c.Boolean(nullable: false),
+                        TwoFactorEnabled = c.Boolean(nullable: false),
+                        LockoutEndDateUtc = c.DateTime(),
+                        LockoutEnabled = c.Boolean(nullable: false),
+                        AccessFailedCount = c.Int(nullable: false),
+                        UserName = c.String(nullable: false, maxLength: 256),
+                    })
+                .PrimaryKey(t => t.Id)
+                .ForeignKey("dbo.AppUsers", t => t.AppUserId, cascadeDelete: true)
+                .Index(t => t.AppUserId)
+                .Index(t => t.UserName, unique: true, name: "UserNameIndex");
+            
+            CreateTable(
+                "dbo.AspNetUserClaims",
+                c => new
+                    {
+                        Id = c.Int(nullable: false, identity: true),
+                        UserId = c.String(nullable: false, maxLength: 128),
+                        ClaimType = c.String(),
+                        ClaimValue = c.String(),
+                    })
+                .PrimaryKey(t => t.Id)
+                .ForeignKey("dbo.AspNetUsers", t => t.UserId, cascadeDelete: true)
+                .Index(t => t.UserId);
+            
+            CreateTable(
+                "dbo.AspNetUserLogins",
+                c => new
+                    {
+                        LoginProvider = c.String(nullable: false, maxLength: 128),
+                        ProviderKey = c.String(nullable: false, maxLength: 128),
+                        UserId = c.String(nullable: false, maxLength: 128),
+                    })
+                .PrimaryKey(t => new { t.LoginProvider, t.ProviderKey, t.UserId })
+                .ForeignKey("dbo.AspNetUsers", t => t.UserId, cascadeDelete: true)
                 .Index(t => t.UserId);
             
             CreateTable(
@@ -159,19 +239,31 @@ namespace RentApp.Migrations
         public override void Down()
         {
             DropForeignKey("dbo.VehiclePictures", "VehicleId", "dbo.Vehicles");
-            DropForeignKey("dbo.Pricings", "UserId", "dbo.Users");
+            DropForeignKey("dbo.AspNetUserRoles", "UserId", "dbo.AspNetUsers");
+            DropForeignKey("dbo.AspNetUserLogins", "UserId", "dbo.AspNetUsers");
+            DropForeignKey("dbo.AspNetUserClaims", "UserId", "dbo.AspNetUsers");
+            DropForeignKey("dbo.AspNetUsers", "AppUserId", "dbo.AppUsers");
+            DropForeignKey("dbo.AspNetUserRoles", "RoleId", "dbo.AspNetRoles");
+            DropForeignKey("dbo.Pricings", "UserId", "dbo.AppUsers");
             DropForeignKey("dbo.Pricings", "RentServiceId", "dbo.RentServices");
             DropForeignKey("dbo.Components", "Pricing_PricingId", "dbo.Pricings");
             DropForeignKey("dbo.OfficePictures", "OfficeId", "dbo.Offices");
             DropForeignKey("dbo.Components", "VehicleId", "dbo.Vehicles");
-            DropForeignKey("dbo.Comments", "UserId", "dbo.Users");
+            DropForeignKey("dbo.Comments", "UserId", "dbo.AppUsers");
             DropForeignKey("dbo.Comments", "OrderId", "dbo.Orders");
             DropForeignKey("dbo.Orders", "VehicleId", "dbo.Vehicles");
             DropForeignKey("dbo.Vehicles", "RentServiceId", "dbo.RentServices");
             DropForeignKey("dbo.Orders", "RentService_RentServiceId", "dbo.RentServices");
             DropForeignKey("dbo.Offices", "RentServiceId", "dbo.RentServices");
-            DropForeignKey("dbo.Orders", "UserId", "dbo.Users");
+            DropForeignKey("dbo.Orders", "UserId", "dbo.AppUsers");
             DropIndex("dbo.VehiclePictures", new[] { "VehicleId" });
+            DropIndex("dbo.AspNetUserLogins", new[] { "UserId" });
+            DropIndex("dbo.AspNetUserClaims", new[] { "UserId" });
+            DropIndex("dbo.AspNetUsers", "UserNameIndex");
+            DropIndex("dbo.AspNetUsers", new[] { "AppUserId" });
+            DropIndex("dbo.AspNetUserRoles", new[] { "RoleId" });
+            DropIndex("dbo.AspNetUserRoles", new[] { "UserId" });
+            DropIndex("dbo.AspNetRoles", "RoleNameIndex");
             DropIndex("dbo.Pricings", new[] { "UserId" });
             DropIndex("dbo.Pricings", new[] { "RentServiceId" });
             DropIndex("dbo.OfficePictures", new[] { "OfficeId" });
@@ -185,15 +277,21 @@ namespace RentApp.Migrations
             DropIndex("dbo.Comments", new[] { "OrderId" });
             DropIndex("dbo.Comments", new[] { "UserId" });
             DropTable("dbo.VehiclePictures");
+            DropTable("dbo.AspNetUserLogins");
+            DropTable("dbo.AspNetUserClaims");
+            DropTable("dbo.AspNetUsers");
+            DropTable("dbo.Services");
+            DropTable("dbo.AspNetUserRoles");
+            DropTable("dbo.AspNetRoles");
             DropTable("dbo.Pricings");
             DropTable("dbo.OfficePictures");
             DropTable("dbo.Components");
             DropTable("dbo.Offices");
             DropTable("dbo.RentServices");
             DropTable("dbo.Vehicles");
-            DropTable("dbo.Users");
             DropTable("dbo.Orders");
             DropTable("dbo.Comments");
+            DropTable("dbo.AppUsers");
         }
     }
 }

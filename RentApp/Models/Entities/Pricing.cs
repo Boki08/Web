@@ -20,6 +20,6 @@ namespace RentApp.Models.Entities
         [Required]
         public List<Component> Components { get; set; }
         public virtual RentService RentService { get; set; }
-        public virtual User User { get; set; }
+        public virtual AppUser User { get; set; }
     }
 }
