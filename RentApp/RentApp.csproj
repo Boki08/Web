@@ -290,6 +290,10 @@
     <Compile Include="Migrations\201806062112124_ServiceGrade.Designer.cs">
       <DependentUpon>201806062112124_ServiceGrade.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201806081013244_UserPass.cs" />
+    <Compile Include="Migrations\201806081013244_UserPass.Designer.cs">
+      <DependentUpon>201806081013244_UserPass.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\AccountBindingModels.cs" />
     <Compile Include="Models\AccountViewModels.cs" />
@@ -407,6 +411,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201806062112124_ServiceGrade.resx">
       <DependentUpon>201806062112124_ServiceGrade.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201806081013244_UserPass.resx">
+      <DependentUpon>201806081013244_UserPass.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>

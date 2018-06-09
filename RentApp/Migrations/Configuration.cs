@@ -128,7 +128,7 @@ namespace RentApp.Migrations
 
                   u => u.Name,
 
-                  new AppUser() { Name = "Admin Adminovic",  Email = "admin@yahoo.com",  BirthDate=DateTime.Parse("1/1/2000"),DocumentPicture="123",Surname="asd",Type="3" }
+                  new AppUser() { Name = "Admin Adminovic",Password="123",  Email = "admin@yahoo.com",  BirthDate=DateTime.Parse("1/1/2000"),DocumentPicture="123",Surname="asd",Type="3" }
 
             );
 
@@ -136,7 +136,7 @@ namespace RentApp.Migrations
 
                 p => p.Name,
 
-                new AppUser() { Name = "AppUser AppUserovic", Email = "user@yahoo.com", BirthDate = DateTime.Parse("1/1/2001"), DocumentPicture = "11", Surname = "asdgg", Type = "1" }
+                new AppUser() { Name = "AppUser AppUserovic", Password = "456", Email = "user@yahoo.com", BirthDate = DateTime.Parse("1/1/2001"), DocumentPicture = "11", Surname = "asdgg", Type = "1" }
 
             );
             try

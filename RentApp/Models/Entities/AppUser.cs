@@ -15,6 +15,8 @@ namespace RentApp.Models.Entities
         [Required]
         public string Surname { get; set; }
         [Required]
+        public string Password { get; set; }
+        [Required]
         public string Email { get; set; }
         [Required]
         public DateTime BirthDate { get; set; }
