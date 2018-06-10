@@ -48,7 +48,7 @@ namespace RentApp
                 TokenEndpointPath = new PathString("/oauth/token"),
                 AccessTokenExpireTimeSpan = TimeSpan.FromDays(1),
                 Provider = new CustomOAuthProvider(),
-                //AccessTokenFormat = new CustomJwtFormat("http://localhost:51680") //TODO Kad promenis port, menjaj i ovde. ---> Premesteno u UnityConfig!
+                AccessTokenFormat = new CustomJwtFormat("http://localhost:51680") //TODO Kad promenis port, menjaj i ovde. ---> Premesteno u UnityConfig!
             };
 
             // OAuth 2.0 Bearer Access Token Generation
