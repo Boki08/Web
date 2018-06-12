@@ -139,6 +139,33 @@ namespace RentApp.Migrations
                 new AppUser() { Name = "AppUser AppUserovic", Password = "456", Email = "user@yahoo.com", BirthDate = DateTime.Parse("1/1/2001"), DocumentPicture = "11", Surname = "asdgg", Type = "1" }
 
             );
+
+            //rentServices
+
+            context.RentServices.AddOrUpdate(
+
+                p => p.Name,
+
+                new RentService() { Name = "Rent1", Email = "rent1@yahoo.com", Description="Description of the description",Grade=4,Logo="1234" }
+
+            );
+            context.RentServices.AddOrUpdate(
+
+                p => p.Name,
+
+                new RentService() { Name = "Rent2", Email = "rent2@yahoo.com", Description = "Description of the description", Grade = 1, Logo = "1234" }
+
+            );
+            context.RentServices.AddOrUpdate(
+
+               p => p.Name,
+
+               new RentService() { Name = "Rent3", Email = "rent3@yahoo.com", Description = "Description of the description", Grade = 5, Logo = "1234" }
+
+           );
+
+
+
             try
             {
                 context.SaveChanges();
