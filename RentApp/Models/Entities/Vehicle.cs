@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -25,6 +26,7 @@ namespace RentApp.Models.Entities
         public string Description { get; set; }
         [Required]
         public bool Available { get; set; }
+        [JsonIgnore]
         public virtual RentService RentService { get; set; }
     }
 }

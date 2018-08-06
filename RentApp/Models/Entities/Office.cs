@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -19,7 +20,7 @@ namespace RentApp.Models.Entities
         public double Latitude { get; set; }
         [Required]
         public double Longitude { get; set; }
-
+        [JsonIgnore]
         public virtual RentService RentService { get; set; }
     }
 }

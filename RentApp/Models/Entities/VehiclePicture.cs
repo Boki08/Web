@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -16,6 +17,7 @@ namespace RentApp.Models.Entities
         public int VehicleId { get; set; }
         [Required]
         public string Data { get; set; }
+        [JsonIgnore]
         public virtual Vehicle Vehicle { get; set; }
     }
 }

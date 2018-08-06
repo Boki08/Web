@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -25,8 +26,9 @@ namespace RentApp.Models.Entities
         public DateTime DepartureDate { get; set; }
         [Required]
         public DateTime ReturnDate { get; set; }
-
+        [JsonIgnore]
         public virtual Vehicle Vehicle { get; set; }
+        [JsonIgnore]
         public virtual AppUser User { get; set; }
     }
 }

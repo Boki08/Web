@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -19,8 +20,9 @@ namespace RentApp.Models.Entities
         public string Review { get; set; }
         [Required]
         public int Grade { get; set; }
-
+        [JsonIgnore]
         public virtual AppUser User { get; set; }
+        [JsonIgnore]
         public virtual Order Order { get; set; }
     }
 }

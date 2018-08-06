@@ -294,6 +294,10 @@
     <Compile Include="Migrations\201806081013244_UserPass.Designer.cs">
       <DependentUpon>201806081013244_UserPass.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201806201313242_JsonIgnore.cs" />
+    <Compile Include="Migrations\201806201313242_JsonIgnore.Designer.cs">
+      <DependentUpon>201806201313242_JsonIgnore.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\AccountBindingModels.cs" />
     <Compile Include="Models\AccountViewModels.cs" />
@@ -309,6 +313,7 @@
     <Compile Include="Models\Entities\AppUser.cs" />
     <Compile Include="Models\Entities\Vehicle.cs" />
     <Compile Include="Models\Entities\VehiclePicture.cs" />
+    <Compile Include="Models\PagingParameterModel.cs" />
     <Compile Include="Persistance\DemoContext.cs" />
     <Compile Include="Persistance\RADBContext.cs" />
     <Compile Include="Persistance\Repository\AppUserRepository.cs" />
@@ -414,6 +419,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201806081013244_UserPass.resx">
       <DependentUpon>201806081013244_UserPass.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201806201313242_JsonIgnore.resx">
+      <DependentUpon>201806201313242_JsonIgnore.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>
