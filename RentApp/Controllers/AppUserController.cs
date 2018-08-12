@@ -61,18 +61,19 @@ namespace RentApp.Controllers
         [HttpPost]
         [Route("addAppUser")]
         [ResponseType(typeof(AppUser))]
-        public IHttpActionResult addAppUser(AppUser appUser)
+        public IHttpActionResult addAppUser([FromBody]AppUser appUser)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
+            //if (!ModelState.IsValid)
+            //{
+            //    return BadRequest(ModelState);
+            //}
+           
+            AppUser hj = _unitOfWork.AppUsers.Find(u => u.UserId == 1).FirstOrDefault();
             _unitOfWork.AppUsers.Add(appUser);
 
             try
             {
-                _unitOfWork.Complete();
+                int a=_unitOfWork.Complete();
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -101,9 +102,8 @@ namespace RentApp.Controllers
             user.BirthDate = appUser.BirthDate;
             user.DocumentPicture = appUser.DocumentPicture;
             user.Email = appUser.Email;
-            user.Name = appUser.Name;
-            user.Surname = appUser.Surname;
-            user.Type = appUser.Type;
+            user.FullName = appUser.FullName;
+            
 
             _unitOfWork.AppUsers.Update(user);
 

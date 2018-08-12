@@ -19,6 +19,8 @@ namespace RentApp.Models.Entities
         [Required]
         public string Review { get; set; }
         [Required]
+        public DateTime PostedDate { get; set; }
+        [Required]
         public int Grade { get; set; }
         [JsonIgnore]
         public virtual AppUser User { get; set; }

@@ -318,15 +318,17 @@ namespace RentApp.Controllers
                 return BadRequest(ModelState);
             }
 
-            var user = new RAIdentityUser() { UserName = model.Email, Email = model.Email };
+            AppUser appUser = new AppUser() { FullName = model.FullName, Email = model.Email, BirthDate = model.BirthDate};
+            var user = new RAIdentityUser() { UserName = model.Email, Email = model.Email, AppUser = appUser, PasswordHash = RAIdentityUser.HashPassword(model.Password) };
 
             IdentityResult result = await UserManager.CreateAsync(user, model.Password);
+            
 
             if (!result.Succeeded)
             {
                 return GetErrorResult(result);
             }
-
+             UserManager.AddToRole(user.Id, "AppUser");
             return Ok();
         }
 

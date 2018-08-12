@@ -298,6 +298,14 @@
     <Compile Include="Migrations\201806201313242_JsonIgnore.Designer.cs">
       <DependentUpon>201806201313242_JsonIgnore.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201808091849023_UserChanges1.cs" />
+    <Compile Include="Migrations\201808091849023_UserChanges1.Designer.cs">
+      <DependentUpon>201808091849023_UserChanges1.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201808121832272_UserChanges2.cs" />
+    <Compile Include="Migrations\201808121832272_UserChanges2.Designer.cs">
+      <DependentUpon>201808121832272_UserChanges2.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\AccountBindingModels.cs" />
     <Compile Include="Models\AccountViewModels.cs" />
@@ -422,6 +430,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201806201313242_JsonIgnore.resx">
       <DependentUpon>201806201313242_JsonIgnore.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201808091849023_UserChanges1.resx">
+      <DependentUpon>201808091849023_UserChanges1.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201808121832272_UserChanges2.resx">
+      <DependentUpon>201808121832272_UserChanges2.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>
