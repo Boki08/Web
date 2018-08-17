@@ -9,7 +9,7 @@ namespace RentApp.Persistance.Repository
 {
     public class RentServiceRepository : Repository<RentService, int>, IRentServiceRepository
     {
-        public RentServiceRepository(RADBContext context) : base(context)
+        public RentServiceRepository(DbContext context) : base(context)
         {
         }
 

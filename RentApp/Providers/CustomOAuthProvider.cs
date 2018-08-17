@@ -43,35 +43,16 @@ namespace RentApp.Providers
 
             RADBContext db = new RADBContext();
 
-            var userRole = user.Roles.FirstOrDefault();
-            var role = db.Roles.SingleOrDefault(r => r.Id == userRole.RoleId);
-            var roleName = role?.Name;
-            if (roleName == "Admin")
-            {
-                context.OwinContext.Response.Headers.Add("Role", new[] { "Admin" });
-            }
-            else if (roleName == "Manager")
-            {
-                context.OwinContext.Response.Headers.Add("Role", new[] { "Manager" });
-            }
-            else
-            {
-                context.OwinContext.Response.Headers.Add("Role", new[] { "User" });
-            }
+           
 
-            //Mora se dodati u header response-a kako bi se se Role atribut
-            //mogao procitati na klijentskoj strani
-            context.OwinContext.Response.Headers.Add("Access-Control-Expose-Headers", new[] { "Role" });
-            //if (!user.EmailConfirmed)
-            //{
-            //    context.SetError("invalid_grant", "AppUser did not confirm email.");
-            //    return;
-            //}
+            
+            string fullName=db.AppUsers.SingleOrDefault(r => r.UserId == user.AppUserId).FullName;
+           
 
             ClaimsIdentity oAuthIdentity = await user.GenerateUserIdentityAsync(userManager, "JWT");
-
+            oAuthIdentity.AddClaim(new Claim("UserFullName", fullName));
             var ticket = new AuthenticationTicket(oAuthIdentity, null);
-
+            
             context.Validated(ticket);
 
         }
