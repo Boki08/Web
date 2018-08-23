@@ -41,7 +41,7 @@ namespace RentApp.Persistance.Repository
         }
         public IEnumerable<TEntity> GetAll(int pageIndex, int pageSize)
         {
-            return context.Set<TEntity>().Skip((pageIndex - 1) * pageSize).Take(pageSize);
+            return context.Set<TEntity>().ToList().Skip((pageIndex - 1) * pageSize).Take(pageSize);
         }
 
 
@@ -54,7 +54,10 @@ namespace RentApp.Persistance.Repository
         {
             context.Set<TEntity>().RemoveRange(entities);
         }
-
+        public int CountElements()
+        {
+            return context.Set<TEntity>().Count();
+        }
         public void Update(TEntity entity)
         {
             context.Set<TEntity>().Attach(entity);

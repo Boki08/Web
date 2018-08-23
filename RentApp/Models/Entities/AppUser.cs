@@ -18,6 +18,8 @@ namespace RentApp.Models.Entities
         public DateTime BirthDate { get; set; }
         [Required]
         public bool Activated { get; set; }
+        [Required]
+        public bool ProfileEdited { get; set; }
         public string DocumentPicture { get; set; }
         public virtual List<Comment> Comments { get; set; }
         public virtual List<Order> Orders { get; set; }

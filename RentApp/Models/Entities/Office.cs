@@ -17,6 +17,8 @@ namespace RentApp.Models.Entities
         [Required]
         public string Address { get; set; }
         [Required]
+        public string Picture { get; set; }
+        [Required]
         public double Latitude { get; set; }
         [Required]
         public double Longitude { get; set; }

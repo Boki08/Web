@@ -22,5 +22,7 @@ namespace RentApp.Persistance.Repository
         void RemoveRange(IEnumerable<TEntity> entities);
 
         void Update(TEntity entity);
+
+        int CountElements();
     }
 }

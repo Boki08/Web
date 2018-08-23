@@ -19,6 +19,16 @@ namespace RentApp.Migrations
 
         protected override void Seed(RentApp.Persistance.RADBContext context)
         {
+            //debug
+            //if (System.Diagnostics.Debugger.IsAttached == false)
+            //{
+            //    System.Diagnostics.Debugger.Launch();
+            //}
+            //((System.Data.Entity.Validation.DbEntityValidationException)$exception).EntityValidationErrors
+
+
+
+
             //  This method will be called after migrating to the latest version.
 
             //  You can use the DbSet<T>.AddOrUpdate() helper extension method 
@@ -97,6 +107,7 @@ namespace RentApp.Migrations
             //    userManager.AddToRole(user.Id, "AppUser");
 
             //}
+
             if (!context.Roles.Any(r => r.Name == "Admin"))
             {
                 var store = new RoleStore<IdentityRole>(context);
@@ -131,7 +142,13 @@ namespace RentApp.Migrations
                   new AppUser() { FullName = "Admin Adminovic",  Email = "admin@yahoo.com",  BirthDate=DateTime.Parse("1/1/2000"),DocumentPicture="123" }
 
             );
+            context.AppUsers.AddOrUpdate(
 
+                  u => u.FullName,
+
+                  new AppUser() { FullName = "Manager", Email = "manager@yahoo.com", BirthDate = DateTime.Parse("1/1/2000"), DocumentPicture = "123" }
+
+            );
             context.AppUsers.AddOrUpdate(
 
                 p => p.FullName,
@@ -222,26 +239,38 @@ namespace RentApp.Migrations
             {
                 context.SaveChanges();
             }
-            catch (DbEntityValidationException ex)
-            {
-                StringBuilder sb = new StringBuilder();
+            //catch (DbEntityValidationException ex)
+            //{
+            //    StringBuilder sb = new StringBuilder();
 
-                foreach (var failure in ex.EntityValidationErrors)
+            //    foreach (var failure in ex.EntityValidationErrors)
+            //    {
+            //        sb.AppendFormat("{0} failed validation\n", failure.Entry.Entity.GetType());
+            //        foreach (var error in failure.ValidationErrors)
+            //        {
+            //            sb.AppendFormat("- {0} : {1}", error.PropertyName, error.ErrorMessage);
+            //            sb.AppendLine();
+            //        }
+            //    }
+
+            //    throw new DbEntityValidationException(
+            //        "Entity Validation Failed - errors follow:\n" +
+            //        sb.ToString(), ex
+            //    ); // Add the original exception as the innerException
+            //}
+            catch (DbEntityValidationException dbEx)
+            {
+                foreach (var validationErrors in dbEx.EntityValidationErrors)
                 {
-                    sb.AppendFormat("{0} failed validation\n", failure.Entry.Entity.GetType());
-                    foreach (var error in failure.ValidationErrors)
+                    foreach (var validationError in validationErrors.ValidationErrors)
                     {
-                        sb.AppendFormat("- {0} : {1}", error.PropertyName, error.ErrorMessage);
-                        sb.AppendLine();
+                        System.Diagnostics.Trace.TraceInformation("Property: {0} Error: {1}",
+                                                validationError.PropertyName,
+                                                validationError.ErrorMessage);
                     }
                 }
-
-                throw new DbEntityValidationException(
-                    "Entity Validation Failed - errors follow:\n" +
-                    sb.ToString(), ex
-                ); // Add the original exception as the innerException
             }
-           // context.SaveChanges();
+            // context.SaveChanges();
 
 
             var userStore = new UserStore<RAIdentityUser>(context);
@@ -253,6 +282,13 @@ namespace RentApp.Migrations
                 var user = new RAIdentityUser() { Id = "admin", UserName = "admin", Email = "admin@yahoo.com", PasswordHash = RAIdentityUser.HashPassword("admin"), AppUserId = _appUser.UserId };
                 userManager.Create(user);
                 userManager.AddToRole(user.Id, "Admin");
+            }
+            if (!context.Users.Any(u => u.UserName == "manager"))
+            {
+                var _appUser = context.AppUsers.FirstOrDefault(a => a.FullName == "Manager");
+                var user = new RAIdentityUser() { Id = "manager", UserName = "manager", Email = "menager@yahoo.com", PasswordHash = RAIdentityUser.HashPassword("manager"), AppUserId = _appUser.UserId };
+                userManager.Create(user);
+                userManager.AddToRole(user.Id, "Manager");
             }
 
             if (!context.Users.Any(u => u.UserName == "appu"))

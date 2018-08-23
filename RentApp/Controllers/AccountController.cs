@@ -322,7 +322,7 @@ namespace RentApp.Controllers
             var user = new RAIdentityUser() { UserName = model.Email, Email = model.Email, AppUser = appUser, PasswordHash = RAIdentityUser.HashPassword(model.Password) };
 
             IdentityResult result = await UserManager.CreateAsync(user, model.Password);
-            
+           
 
             if (!result.Succeeded)
             {

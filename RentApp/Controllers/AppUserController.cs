@@ -1,4 +1,5 @@
-﻿using RentApp.Models.Entities;
+﻿using Newtonsoft.Json;
+using RentApp.Models.Entities;
 using RentApp.Persistance;
 using RentApp.Persistance.UnitOfWork;
 using System;
@@ -9,6 +10,8 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Net.Mail;
 using System.Web;
 using System.Web.Http;
 using System.Web.Http.Description;
@@ -23,21 +26,114 @@ namespace RentApp.Controllers
 
         public AppUserController(IUnitOfWork unitOfWork)
         {
+        
             this._unitOfWork = unitOfWork;
         }
 
+      
         /* public IEnumerable<AppUser> GetComments()
          {
              return _unitOfWork.AppUsers.GetAll();
          }*/
 
         [HttpGet]
-        [Route("users")]
-        public IEnumerable<AppUser> getComments()
+        [Route("allUsers/{pageIndex}/{pageSize}/{type}")]
+        public IHttpActionResult GetAllUsers(int pageIndex, int pageSize,string type)
         {
-            return _unitOfWork.AppUsers.GetAll();
-        }
 
+            RADBContext db = new RADBContext();
+            var role = db.Roles.SingleOrDefault(m => m.Name == type);
+            var usersByRole = db.Users.Where(m => m.Roles.All(r => r.RoleId == role.Id));
+            var sourceFromBase = _unitOfWork.AppUsers.GetAll();
+
+            var hash = new HashSet<int>();
+
+            foreach (var user in usersByRole)
+            {
+                hash.Add(user.AppUserId);
+            }
+            List<AppUser> source = new List<AppUser>();
+            foreach (var user in sourceFromBase)
+            {
+                if(hash.Contains(user.UserId))
+                {
+                    source.Add(user);
+                }
+            }
+            // Get's No of Rows Count   
+            int count = source.Count();
+
+            // Parameter is passed from Query string if it is null then it default Value will be pageNumber:1  
+           // int CurrentPage = pagingparametermodel.pageNumber;
+
+            // Parameter is passed from Query string if it is null then it default Value will be pageSize:20  
+           // int PageSize = pagingparametermodel.pageSize;
+
+            // Display TotalCount to Records to User  
+            int TotalCount = count;
+
+            // Calculating Totalpage by Dividing (No of Records / Pagesize)  
+            int TotalPages = (int)Math.Ceiling(count / (double)pageSize);
+
+            // Returns List of Customer after applying Paging   
+            var items = source.Skip((pageIndex - 1) * pageSize).Take(pageSize).ToList();
+
+            // if CurrentPage is greater than 1 means it has previousPage  
+            var previousPage = pageIndex > 1 ? "Yes" : "No";
+
+            // if TotalPages is greater than CurrentPage means it has nextPage  
+            var nextPage = pageIndex < TotalPages ? "Yes" : "No";
+
+            // Object which we are going to send in header   
+            var paginationMetadata = new
+            {
+                totalCount = TotalCount,
+                pageSize,
+                currentPage = pageIndex,
+                totalPages = TotalPages,
+                previousPage,
+                nextPage
+            };
+
+            // Setting Header  
+            HttpContext.Current.Response.Headers.Add("Access-Control-Expose-Headers", "Paging-Headers");
+            HttpContext.Current.Response.Headers.Add("Paging-Headers", JsonConvert.SerializeObject(paginationMetadata));
+            // Returing List of Customers Collections  
+            return Ok(items);
+
+
+
+
+            IEnumerable<AppUser> users = _unitOfWork.AppUsers.GetAll();
+            return Ok(users);
+        }
+        [HttpGet]
+        [Route("getDocumentPicture")]
+        public HttpResponseMessage GetDocumentPicture(string path)
+        {
+            if (path == null)
+            {
+                path = "default-placeholder.png";
+            }
+
+            var filePath = HttpContext.Current.Server.MapPath("~/Images/" + path);
+            if (!File.Exists(filePath))
+            {
+                path = "default-placeholder.png";
+                filePath = HttpContext.Current.Server.MapPath("~/Images/" + path);
+            }
+            var ext = Path.GetExtension(filePath);
+            
+            var contents = File.ReadAllBytes(filePath);
+
+            MemoryStream ms = new MemoryStream(contents);
+
+            var response = Request.CreateResponse(HttpStatusCode.OK);
+            response.Content = new StreamContent(ms);
+            response.Content.Headers.ContentType = new MediaTypeHeaderValue("image/" + ext);
+
+            return response;
+        }
         // GET: api/AppUser/5/
         [HttpGet]
         [Route("getUser/{id}")]
@@ -81,6 +177,8 @@ namespace RentApp.Controllers
             }
         }
 
+       
+
         [HttpPost]
         [Route("addAppUser")]
         [ResponseType(typeof(AppUser))]
@@ -121,6 +219,7 @@ namespace RentApp.Controllers
             appUser.FullName = httpRequest["FullName"];
             appUser.BirthDate = DateTime.Parse(httpRequest["BirthDate"]);
             appUser.Email = httpRequest["Email"];
+            appUser.ProfileEdited = true;
 
             if (appUser.DocumentPicture == null || appUser.DocumentPicture == "")
             {
@@ -132,10 +231,70 @@ namespace RentApp.Controllers
                 appUser.DocumentPicture = imageName;
             }
 
+
             _unitOfWork.AppUsers.Update(appUser);
             _unitOfWork.Complete();
 
             return Request.CreateResponse(HttpStatusCode.Created);
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpGet]
+        [Route("activateUser/{userId}/{activated}")]
+        [ResponseType(typeof(AppUser))]
+        public IHttpActionResult ActivateUser(int userId,bool activated)
+        {
+
+            AppUser appUser = _unitOfWork.AppUsers.Get(userId);
+
+             //MailMessage mail = new MailMessage("foksfak@gmail.com", appUser.Email);
+             MailMessage mail = new MailMessage("easyrent.e3@gmail.com", "easyrent.e3@gmail.com");
+            SmtpClient client = new SmtpClient();
+            client.Port = 587;
+            client.DeliveryMethod = SmtpDeliveryMethod.Network;
+            client.UseDefaultCredentials = false;
+            client.Credentials = new NetworkCredential("easyrent.e3@gmail.com", "pusgse394");
+            client.Host = "smtp.gmail.com";
+            client.EnableSsl = true;
+            mail.From = new MailAddress("easyrent.e3@gmail.com");
+            // mail.To.Add( appUser.Email);
+            mail.To.Add("bojan.wow95@gmail.com");
+            
+
+
+            if (activated)
+            {
+                appUser.Activated = true;
+                
+                mail.Subject = "Profile approved";
+                mail.Body = "Your profile was approved by our administrators!";
+              
+            }
+            else
+            {
+                appUser.Activated = false;
+
+                mail.Subject = "Profile wasn't approved";
+                mail.Body = "Unfortunately your profile wasn't approved. Try changing your personal information.";
+               
+            }
+            appUser.ProfileEdited = false;
+
+
+
+            _unitOfWork.AppUsers.Update(appUser);
+            _unitOfWork.Complete();
+
+            try
+            {
+                client.Send(mail);
+            }
+            catch
+            {
+
+            }
+
+            return Ok(appUser);
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Web;
 
@@ -18,6 +19,10 @@ namespace RentApp.Models.Entities
         public string Logo { get; set; }
         [Required]
         public string Description { get; set; }
+        [Required]
+        public bool Activated { get; set; }
+        [Required]
+        public bool ServiceEdited { get; set; }
         public double Grade { get; set; }
 
         public List<Order> Orders { get; set; }

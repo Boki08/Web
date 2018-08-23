@@ -23,6 +23,10 @@ namespace RentApp.Persistance.UnitOfWork
         public IOrderRepository Orders { get; set; }
         [Dependency]
         public IVehicleRepository Vehicles { get; set; }
+        [Dependency]
+        public IVehiclePictureRepository VehiclePictures { get; set; }
+        [Dependency]
+        public IOfficeRepository Offices { get; set; }
 
         public DemoUnitOfWork(DbContext context)
         {
