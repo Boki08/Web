@@ -16,6 +16,9 @@ namespace RentApp.Models.Entities
         [ForeignKey("RentService")]
         public int RentServiceId { get; set; }
         [Required]
+        [ForeignKey("TypeOfVehicle")]
+        public int TypeId { get; set; }
+        [Required]
         public string Model { get; set; }
         [Required]
         public string YearOfManufacturing { get; set; }
@@ -25,12 +28,16 @@ namespace RentApp.Models.Entities
         [Required]
         public string Description { get; set; }
         [Required]
+        public double HourlyPrice { get; set; }
+        [Required]
         public bool Available { get; set; }
         [Required]
         public bool Enabled { get; set; }
         [JsonIgnore]
         public virtual RentService RentService { get; set; }
+        //[JsonIgnore]
+        public virtual List<VehiclePicture> VehiclePictures { get; set; }
         [JsonIgnore]
-        public virtual List<string> VehiclePictures { get; set; }
+        public virtual TypeOfVehicle TypeOfVehicle { get; set; }
     }
 }

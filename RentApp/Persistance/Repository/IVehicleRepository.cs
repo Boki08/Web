@@ -9,6 +9,7 @@ namespace RentApp.Persistance.Repository
 {
     public interface IVehicleRepository : IRepository<Vehicle, int>
     {
-      
+        IEnumerable<Vehicle> GetAllWithPics(int pageIndex, int pageSize, int rentServiceId);
+        int CountServiceVehicles(int rentServiceId);
     }
 }

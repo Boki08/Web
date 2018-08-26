@@ -30,9 +30,12 @@ namespace RentApp.Models.Entities
         public virtual Vehicle Vehicle { get; set; }
         [JsonIgnore]
         public virtual AppUser User { get; set; }
+        
         [JsonIgnore]
         public virtual Office DepartureOffice { get; set; }
         [JsonIgnore]
         public virtual Office ReturnOffice { get; set; }
+        [JsonIgnore]
+        public virtual List<Comment> Comment { get; set; }
     }
 }

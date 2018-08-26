@@ -16,7 +16,7 @@ namespace RentApp.Persistance.UnitOfWork
         IVehicleRepository Vehicles { get; set; }
         IVehiclePictureRepository VehiclePictures { get; set; }
         IOfficeRepository Offices { get; set; }
-        
+        ITypeOfVehicleRepository TypesOfVehicles { get; set; }
         int Complete();
     }
 }

@@ -180,7 +180,26 @@ namespace RentApp.Migrations
                new RentService() { Name = "Rent3", Email = "rent3@yahoo.com", Description = "Description of the description", Grade = 5, Logo = "1234" }
 
            );
+            //type
+            context.TypesOfVehicles.AddOrUpdate(
 
+                p => p.TypeId,
+
+                new TypeOfVehicle() { Type = "type1" }
+
+            ); context.TypesOfVehicles.AddOrUpdate(
+
+                 p => p.TypeId,
+
+                 new TypeOfVehicle(){ Type = "type1" }
+
+             ); context.TypesOfVehicles.AddOrUpdate(
+
+                 p => p.TypeId,
+
+                 new TypeOfVehicle() { Type = "type1" }
+
+             );
             context.Vehicles.AddOrUpdate(
 
                 p => p.VehicleId,
@@ -193,7 +212,8 @@ namespace RentApp.Migrations
                     Description = "jdfgdhfdhgf",
                     Pictures = "1234",
                     RentServiceId = 1,
-                    YearOfManufacturing = "2010"
+                    YearOfManufacturing = "2010",
+                    TypeId = 1,
                 }
                 
 
@@ -210,7 +230,8 @@ namespace RentApp.Migrations
                     Description = "jdfgdhfdhgf",
                     Pictures = "1234",
                     RentServiceId = 1,
-                    YearOfManufacturing = "2015"
+                    YearOfManufacturing = "2015",
+                    TypeId = 2,
                 }
             );
             context.Vehicles.AddOrUpdate(
@@ -225,7 +246,8 @@ namespace RentApp.Migrations
                    Description = "jdfgdhfdhgf",
                    Pictures = "1234",
                    RentServiceId = 2,
-                   YearOfManufacturing = "2013"
+                   YearOfManufacturing = "2013",
+                  TypeId = 3,
                }
            );
 

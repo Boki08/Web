@@ -134,12 +134,12 @@ namespace RentApp.Controllers
         [Route("allServiceVehicles/{pageIndex}/{pageSize}/{serviceID}")]
         public IHttpActionResult GetServiceVehicles(int pageIndex, int pageSize, int serviceID)
         {
-            var source = _unitOfWork.Vehicles.Find(x => x.RentServiceId == serviceID);
-
+            //var source = _unitOfWork.Vehicles.Find(x => x.RentServiceId == serviceID);
+            var source = _unitOfWork.Vehicles.GetAllWithPics(pageIndex,pageSize, serviceID);
 
 
             // Get's No of Rows Count   
-            int count = source.Count();
+            //int count = source.Count();
 
             // Parameter is passed from Query string if it is null then it default Value will be pageNumber:1  
             // int CurrentPage = pagingparametermodel.pageNumber;
@@ -148,13 +148,13 @@ namespace RentApp.Controllers
             // int PageSize = pagingparametermodel.pageSize;
 
             // Display TotalCount to Records to User  
-            int TotalCount = count;
+            int TotalCount = _unitOfWork.Vehicles.CountServiceVehicles(serviceID);
 
             // Calculating Totalpage by Dividing (No of Records / Pagesize)  
-            int TotalPages = (int)Math.Ceiling(count / (double)pageSize);
+            int TotalPages = (int)Math.Ceiling(TotalCount / (double)pageSize);
 
             // Returns List of Customer after applying Paging   
-            var items = source.Skip((pageIndex - 1) * pageSize).Take(pageSize).ToList();
+            //var items = source.ToList();
 
             
 
@@ -171,15 +171,15 @@ namespace RentApp.Controllers
                 pageSize,
                 currentPage = pageIndex,
                 totalPages = TotalPages,
-                previousPage,
-                nextPage
+                //previousPage,
+                //nextPage
             };
 
             // Setting Header  
             HttpContext.Current.Response.Headers.Add("Access-Control-Expose-Headers", "Paging-Headers");
             HttpContext.Current.Response.Headers.Add("Paging-Headers", JsonConvert.SerializeObject(paginationMetadata));
             // Returing List of Customers Collections  
-            return Ok(items);
+            return Ok(source);
 
         }
 
@@ -239,75 +239,52 @@ namespace RentApp.Controllers
             }
 
             return Ok(photos);
-            //var content = new MultipartContent();
-            //var paths = _unitOfWork.VehiclePictures.Find(x=>x.VehicleId==vehicleId).ToList();
+        }
+
+        [Authorize(Roles = "Manager")]
+        [HttpPost]
+        [Route("addVehicle")]
+        [ResponseType(typeof(Vehicle))]
+        public HttpResponseMessage AddVehicle()
+        {
+            var httpRequest = HttpContext.Current.Request;
+
+            string imageName = null;
 
 
 
-            //if (paths.Count() != 0)
-            //{
-            //    List<int> IDs = paths.Select(o => o.VehiclePictureId).ToList();
-            //    var objectContent = new ObjectContent<List<int>>(IDs, new System.Net.Http.Formatting.JsonMediaTypeFormatter());
-            //    content.Add(objectContent);
-            //    var response = Request.CreateResponse(HttpStatusCode.OK);
-            //    foreach (VehiclePicture picture in paths)
-            //    {
-            //        //var filePath = HttpContext.Current.Server.MapPath("~/Images/" + picture.Data);
-            //        //if (!File.Exists(filePath))
-            //        //{
-            //        //    var path = "default-placeholder.png";
-            //        //    filePath = HttpContext.Current.Server.MapPath("~/Images/" + path);
-            //        //}
-            //        //var ext = Path.GetExtension(filePath);
-            //        //var file1Content = new StreamContent(new FileStream(filePath, FileMode.Open));
-            //        //file1Content.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse("image/" + ext);
-            //        //content.Add(file1Content);
+
+            int numberOfImages = Int32.Parse(httpRequest["ImagesNum"]);
+            Vehicle vehicle = new Vehicle();
+            vehicle.Model = httpRequest["Model"];
+            vehicle.Description = httpRequest["Description"];
+            vehicle.Manufacturer = httpRequest["Manufacturer"];
+            vehicle.YearOfManufacturing = httpRequest["YearOfManufacturing"];
+            vehicle.RentServiceId = Int32.Parse(httpRequest["RentServiceId"]);
+            vehicle.Available = true;
+            vehicle.Enabled = false;
+            vehicle.TypeId = Int32.Parse(httpRequest["TypeId"]);
+            vehicle.HourlyPrice= double.Parse(httpRequest["HourlyPrice"]);
 
 
 
-            //        //file1Content.Dispose();
-
-            //       // intArray[i] = int.Parse(strArray[i]);
-            //        String filePath = HostingEnvironment.MapPath("~/Images/" + picture.Data);
-            //        FileStream fileStream = new FileStream(filePath, FileMode.OpenOrCreate);
-            //        Image image = Image.FromStream(fileStream);
-            //        MemoryStream memoryStream = new MemoryStream();
-            //        var ext = Path.GetExtension(filePath);
-            //        image.Save(memoryStream, ImageFormat.Jpeg);
-            //        response.Content = new ByteArrayContent(memoryStream.ToArray());
-            //        response.Content.Headers.ContentType = new MediaTypeHeaderValue("image/jpg");
-            //        fileStream.Close();
-            //        memoryStream.Dispose();
-            //    }
 
 
-            //    //response.Content = objectContent;
-            //    //response.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/" + ext);
-            //    return response;
-            //}
-            //else
-            //{
+            _unitOfWork.Vehicles.Add(vehicle);
+            _unitOfWork.Complete();
 
-            //       var path = "default-placeholder.png";
+            for (int i = 0; i < numberOfImages; i++)
+            {
+                var postedFile = httpRequest.Files[String.Format("Image{0}", i)];
+                imageName = new string(Path.GetFileNameWithoutExtension(postedFile.FileName).Take(10).ToArray()).Replace(" ", "-");
+                imageName = imageName + DateTime.Now.ToString("yymmssfff") + Path.GetExtension(postedFile.FileName);
+                var filePath = HttpContext.Current.Server.MapPath("~/Images/" + imageName);
+                postedFile.SaveAs(filePath);
+                _unitOfWork.VehiclePictures.Add(new VehiclePicture() { Data = imageName, VehicleId = vehicle.VehicleId });
+                _unitOfWork.Complete();
+            }
 
-
-            //    var filePath = HttpContext.Current.Server.MapPath("~/Images/" + path);
-
-            //    var ext = Path.GetExtension(filePath);
-
-            //    var contents = File.ReadAllBytes(filePath);
-
-            //    MemoryStream ms = new MemoryStream(contents);
-
-            //    var response = Request.CreateResponse(HttpStatusCode.OK);
-            //    response.Content = new StreamContent(ms);
-            //    response.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/" + ext);
-
-            //    return response;
-            //}
-
-
-
+            return Request.CreateResponse(HttpStatusCode.Created);
         }
     }
 }

@@ -29,6 +29,15 @@ namespace RentApp.Controllers
             return _unitOfWork.RentServices.GetAll();
         }
 
+        [HttpGet]
+        [Route("getRentService/{serviceId}")]
+        public IHttpActionResult GetServiceService(int serviceId)
+        {
+            var source = _unitOfWork.RentServices.Find(x => x.RentServiceId == serviceId);
+
+            return Ok(source);
+
+        }
 
         [HttpGet]
         [Route("getAll/{pageIndex}/{pageSize}")]

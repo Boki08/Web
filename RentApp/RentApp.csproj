@@ -278,6 +278,7 @@
     <Compile Include="Controllers\OrderController.cs" />
     <Compile Include="Controllers\RentServiceController.cs" />
     <Compile Include="Controllers\ServicesController.cs" />
+    <Compile Include="Controllers\TypeOfVehicleController.cs" />
     <Compile Include="Controllers\ValuesController.cs" />
     <Compile Include="Controllers\VehicleController.cs" />
     <Compile Include="Global.asax.cs">
@@ -331,6 +332,14 @@
     <Compile Include="Migrations\201808231743239_VehiclePictures.Designer.cs">
       <DependentUpon>201808231743239_VehiclePictures.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201808252007034_TypesOfVehiclesID.cs" />
+    <Compile Include="Migrations\201808252007034_TypesOfVehiclesID.Designer.cs">
+      <DependentUpon>201808252007034_TypesOfVehiclesID.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201808252010554_TypesOfVehiclesID2.cs" />
+    <Compile Include="Migrations\201808252010554_TypesOfVehiclesID2.Designer.cs">
+      <DependentUpon>201808252010554_TypesOfVehiclesID2.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\AccountBindingModels.cs" />
     <Compile Include="Models\AccountViewModels.cs" />
@@ -344,6 +353,7 @@
     <Compile Include="Models\Entities\RentService.cs" />
     <Compile Include="Models\Entities\Services.cs" />
     <Compile Include="Models\Entities\AppUser.cs" />
+    <Compile Include="Models\Entities\TypeOfVehicle.cs" />
     <Compile Include="Models\Entities\Vehicle.cs" />
     <Compile Include="Models\Entities\VehiclePicture.cs" />
     <Compile Include="Models\PagingParameterModel.cs" />
@@ -357,12 +367,14 @@
     <Compile Include="Persistance\Repository\IOrderRepository.cs" />
     <Compile Include="Persistance\Repository\IRentServiceRepository.cs" />
     <Compile Include="Persistance\Repository\IRepository.cs" />
+    <Compile Include="Persistance\Repository\ITypeOfVehicleRepository.cs" />
     <Compile Include="Persistance\Repository\IVehiclePictureRepository.cs" />
     <Compile Include="Persistance\Repository\IVehicleRepository.cs" />
     <Compile Include="Persistance\Repository\OfficeRepository.cs" />
     <Compile Include="Persistance\Repository\OrderRepository.cs" />
     <Compile Include="Persistance\Repository\RentServiceRepository.cs" />
     <Compile Include="Persistance\Repository\Repository.cs" />
+    <Compile Include="Persistance\Repository\TypeOfVehicleRepository.cs" />
     <Compile Include="Persistance\Repository\VehiclePictureRepository.cs" />
     <Compile Include="Persistance\Repository\VehicleRepository.cs" />
     <Compile Include="Persistance\UnitOfWork\DemoUnitOfWork.cs" />
@@ -483,6 +495,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201808231743239_VehiclePictures.resx">
       <DependentUpon>201808231743239_VehiclePictures.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201808252007034_TypesOfVehiclesID.resx">
+      <DependentUpon>201808252007034_TypesOfVehiclesID.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201808252010554_TypesOfVehiclesID2.resx">
+      <DependentUpon>201808252010554_TypesOfVehiclesID2.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>

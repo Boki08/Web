@@ -23,6 +23,7 @@ namespace RentApp.Persistance
         public DbSet<AppUser> AppUsers { get; set; }
         public DbSet<Vehicle> Vehicles { get; set; }
         public DbSet<VehiclePicture> VehiclePictures { get; set; }
+        public DbSet<TypeOfVehicle> TypesOfVehicles { get; set; }
 
 
 
