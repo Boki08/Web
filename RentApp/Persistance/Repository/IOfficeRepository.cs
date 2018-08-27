@@ -9,6 +9,6 @@ namespace RentApp.Persistance.Repository
 {
     public interface IOfficeRepository : IRepository<Office, int>
     {
-
+        IEnumerable<Office> GetAll(int pageIndex, int pageSize, int rentServiceId);
     }
 }

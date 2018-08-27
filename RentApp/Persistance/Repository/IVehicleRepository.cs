@@ -11,5 +11,6 @@ namespace RentApp.Persistance.Repository
     {
         IEnumerable<Vehicle> GetAllWithPics(int pageIndex, int pageSize, int rentServiceId);
         int CountServiceVehicles(int rentServiceId);
+        IEnumerable<Vehicle> GetAllWithPicsUser(int pageIndex, int pageSize, int rentServiceId, bool available, string price, int type);
     }
 }

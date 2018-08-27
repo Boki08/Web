@@ -13,5 +13,10 @@ namespace RentApp.Persistance.Repository
         {
         }
         protected RADBContext DemoContext { get { return context as RADBContext; } }
+
+        public IEnumerable<Office> GetAll(int pageIndex, int pageSize, int rentServiceId)
+        {
+            return DemoContext.Offices.Where(x => x.RentServiceId == rentServiceId).ToList().Skip((pageIndex - 1) * pageSize).Take(pageSize);
+        }
     }
 }

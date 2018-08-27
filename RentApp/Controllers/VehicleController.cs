@@ -41,65 +41,65 @@ namespace RentApp.Controllers
             return _unitOfWork.Vehicles.GetAll();
         }
 
-        [HttpGet]
-        [Route("getServiceVehicles/{id}")]
-        //[ResponseType(typeof(Vehicle))]
-        public IEnumerable<Vehicle> getRentServiceVehicles(int id, [FromUri]PagingParameterModel pagingparametermodel)
-        {
-            //IEnumerable<Vehicle> vehicles = unitOfWork.Vehicles.Find(v => v.RentServiceId == id);
+        //[HttpGet]
+        //[Route("getServiceVehicles/{id}")]
+        ////[ResponseType(typeof(Vehicle))]
+        //public IEnumerable<Vehicle> getRentServiceVehicles(int id, [FromUri]PagingParameterModel pagingparametermodel)
+        //{
+        //    //IEnumerable<Vehicle> vehicles = unitOfWork.Vehicles.Find(v => v.RentServiceId == id);
 
-            //if (vehicles == null)
-            //{
-            //    return NotFound();
-            //}
-           // return Ok(vehicles);
-
-
-            var source = _unitOfWork.Vehicles.Find(v => v.RentServiceId == id);//unitOfWork.RentServices.GetAll();
+        //    //if (vehicles == null)
+        //    //{
+        //    //    return NotFound();
+        //    //}
+        //   // return Ok(vehicles);
 
 
+        //    var source = _unitOfWork.Vehicles.Find(v => v.RentServiceId == id);//unitOfWork.RentServices.GetAll();
 
-            // Get's No of Rows Count   
-            int count = source.Count();
 
-            // Parameter is passed from Query string if it is null then it default Value will be pageNumber:1  
-            int CurrentPage = pagingparametermodel.pageNumber;
 
-            // Parameter is passed from Query string if it is null then it default Value will be pageSize:20  
-            int PageSize = pagingparametermodel.pageSize;
+        //    // Get's No of Rows Count   
+        //    int count = source.Count();
 
-            // Display TotalCount to Records to User  
-            int TotalCount = count;
+        //    // Parameter is passed from Query string if it is null then it default Value will be pageNumber:1  
+        //    int CurrentPage = pagingparametermodel.pageNumber;
 
-            // Calculating Totalpage by Dividing (No of Records / Pagesize)  
-            int TotalPages = (int)Math.Ceiling(count / (double)PageSize);
+        //    // Parameter is passed from Query string if it is null then it default Value will be pageSize:20  
+        //    int PageSize = pagingparametermodel.pageSize;
 
-            // Returns List of Customer after applying Paging   
-            var items = source.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
+        //    // Display TotalCount to Records to User  
+        //    int TotalCount = count;
 
-            // if CurrentPage is greater than 1 means it has previousPage  
-            var previousPage = CurrentPage > 1 ? "Yes" : "No";
+        //    // Calculating Totalpage by Dividing (No of Records / Pagesize)  
+        //    int TotalPages = (int)Math.Ceiling(count / (double)PageSize);
 
-            // if TotalPages is greater than CurrentPage means it has nextPage  
-            var nextPage = CurrentPage < TotalPages ? "Yes" : "No";
+        //    // Returns List of Customer after applying Paging   
+        //    var items = source.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
 
-            // Object which we are going to send in header   
-            var paginationMetadata = new
-            {
-                totalCount = TotalCount,
-                pageSize = PageSize,
-                currentPage = CurrentPage,
-                totalPages = TotalPages,
-                previousPage,
-                nextPage
-            };
+        //    // if CurrentPage is greater than 1 means it has previousPage  
+        //    var previousPage = CurrentPage > 1 ? "Yes" : "No";
 
-            // Setting Header  
-            HttpContext.Current.Response.Headers.Add("Access-Control-Expose-Headers", "Paging-Headers");
-            HttpContext.Current.Response.Headers.Add("Paging-Headers", JsonConvert.SerializeObject(paginationMetadata));
-            // Returing List of Customers Collections  
-            return items;
-        }
+        //    // if TotalPages is greater than CurrentPage means it has nextPage  
+        //    var nextPage = CurrentPage < TotalPages ? "Yes" : "No";
+
+        //    // Object which we are going to send in header   
+        //    var paginationMetadata = new
+        //    {
+        //        totalCount = TotalCount,
+        //        pageSize = PageSize,
+        //        currentPage = CurrentPage,
+        //        totalPages = TotalPages,
+        //        previousPage,
+        //        nextPage
+        //    };
+
+        //    // Setting Header  
+        //    HttpContext.Current.Response.Headers.Add("Access-Control-Expose-Headers", "Paging-Headers");
+        //    HttpContext.Current.Response.Headers.Add("Paging-Headers", JsonConvert.SerializeObject(paginationMetadata));
+        //    // Returing List of Customers Collections  
+        //    return items;
+        //}
         [HttpPost]
         [Route("postVehicle")]
         [ResponseType(typeof(Vehicle))]
@@ -128,14 +128,35 @@ namespace RentApp.Controllers
             }
             return Ok(vehicle);
         }
+        [HttpGet]
+        [Route("getVehicle/{id}")]
+        [ResponseType(typeof(AppUser))]
+        public IHttpActionResult GetVehicler(int id)
+        {
+            Vehicle vehicle;
+            try
+            {
+                vehicle = _unitOfWork.Vehicles.Find(u => u.VehicleId == id).FirstOrDefault();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return BadRequest("Cannot refresh average grade.");
+            }
+            if (vehicle == null)
+            {
+                return NotFound();
+            }
 
+            return Ok(vehicle);
+        }
 
+        [Authorize(Roles = "Manager")]
         [HttpGet]
         [Route("allServiceVehicles/{pageIndex}/{pageSize}/{serviceID}")]
         public IHttpActionResult GetServiceVehicles(int pageIndex, int pageSize, int serviceID)
         {
             //var source = _unitOfWork.Vehicles.Find(x => x.RentServiceId == serviceID);
-            var source = _unitOfWork.Vehicles.GetAllWithPics(pageIndex,pageSize, serviceID);
+            var source = _unitOfWork.Vehicles.GetAllWithPics(pageIndex,pageSize, serviceID).ToList();
 
 
             // Get's No of Rows Count   
@@ -182,7 +203,44 @@ namespace RentApp.Controllers
             return Ok(source);
 
         }
+        [HttpGet]
+        [Route("getServiceVehiclesSort/{pageIndex}/{pageSize}/{serviceID}/{available}/{price}/{type}")]
+        public IHttpActionResult GetServiceVehiclesSort(int pageIndex, int pageSize, int serviceID,bool available,string price,int type)
+        {
+            
+            var source = _unitOfWork.Vehicles.GetAllWithPicsUser(pageIndex, pageSize, serviceID,available,price,type).ToList();
 
+
+           
+            int TotalCount = _unitOfWork.Vehicles.CountServiceVehicles(serviceID);
+
+           
+            int TotalPages = (int)Math.Ceiling(TotalCount / (double)pageSize);
+
+            
+            var previousPage = pageIndex > 1 ? "Yes" : "No";
+
+           
+            var nextPage = pageIndex < TotalPages ? "Yes" : "No";
+
+           
+            var paginationMetadata = new
+            {
+                totalCount = TotalCount,
+                pageSize,
+                currentPage = pageIndex,
+                totalPages = TotalPages,
+              
+            };
+
+         
+            HttpContext.Current.Response.Headers.Add("Access-Control-Expose-Headers", "Paging-Headers");
+            HttpContext.Current.Response.Headers.Add("Paging-Headers", JsonConvert.SerializeObject(paginationMetadata));
+           
+
+            return Ok(source);
+
+        }
         [Authorize(Roles = "Manager")]
         [HttpGet]
         [Route("disableVehicle/{vehicleId}/{enabled}")]

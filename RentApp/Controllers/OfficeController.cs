@@ -3,6 +3,7 @@ using RentApp.Models.Entities;
 using RentApp.Persistance.UnitOfWork;
 using System;
 using System.Collections.Generic;
+using System.Data.Entity.Infrastructure;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -31,7 +32,7 @@ namespace RentApp.Controllers
         [Route("allServiceOffices/{pageIndex}/{pageSize}/{serviceID}")]
         public IHttpActionResult GetServiceOffices(int pageIndex, int pageSize, int serviceID)
         {
-            var source = _unitOfWork.Offices.Find(x => x.RentServiceId == serviceID);
+            var source = _unitOfWork.Offices.GetAll(pageIndex,  pageSize,  serviceID);
 
 
 
@@ -51,13 +52,8 @@ namespace RentApp.Controllers
             int TotalPages = (int)Math.Ceiling(count / (double)pageSize);
 
             // Returns List of Customer after applying Paging   
-            var items = source.Skip((pageIndex - 1) * pageSize).Take(pageSize).ToList();
+            //var items = source.Skip((pageIndex - 1) * pageSize).Take(pageSize).ToList();
 
-            // if CurrentPage is greater than 1 means it has previousPage  
-            var previousPage = pageIndex > 1 ? "Yes" : "No";
-
-            // if TotalPages is greater than CurrentPage means it has nextPage  
-            var nextPage = pageIndex < TotalPages ? "Yes" : "No";
 
             // Object which we are going to send in header   
             var paginationMetadata = new
@@ -66,27 +62,61 @@ namespace RentApp.Controllers
                 pageSize,
                 currentPage = pageIndex,
                 totalPages = TotalPages,
-                previousPage,
-                nextPage
+               
             };
 
             // Setting Header  
             HttpContext.Current.Response.Headers.Add("Access-Control-Expose-Headers", "Paging-Headers");
             HttpContext.Current.Response.Headers.Add("Paging-Headers", JsonConvert.SerializeObject(paginationMetadata));
             // Returing List of Customers Collections  
-            return Ok(items);
-
-        }
-        
-
-        [HttpGet]
-        [Route("getRentOffice/{officeID}")]
-        public IHttpActionResult GetServiceOffice( int officeID)
-        {
-            var source = _unitOfWork.Offices.Find(x => x.OfficeId == officeID);
- 
             return Ok(source);
 
+        }
+
+        [HttpGet]
+        [Route("getOffices/{serviceID}")]
+        public IHttpActionResult GetAllServiceOffices(int serviceID)
+        {
+            
+            List<Office> offices;
+            try
+            {
+                offices = _unitOfWork.Offices.Find(x => x.RentServiceId == serviceID).ToList();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return BadRequest("Cannot find offices.");
+            }
+            if (offices == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(offices);
+
+        }
+
+        [HttpGet]
+        [Route("getOffice/{officeID}")]
+        public IHttpActionResult GetServiceOffice( int officeID)
+        {
+            
+
+            Office office;
+            try
+            {
+                office = _unitOfWork.Offices.Find(x => x.OfficeId == officeID).FirstOrDefault();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return BadRequest("Cannot find office.");
+            }
+            if (office == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(office);
         }
 
 

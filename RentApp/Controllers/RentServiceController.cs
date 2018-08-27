@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Web;
 using System.Web.Http;
 using System.Web.Http.Description;
@@ -203,6 +204,34 @@ namespace RentApp.Controllers
             HttpContext.Current.Response.Headers.Add("Paging-Headers", JsonConvert.SerializeObject(paginationMetadata));
             // Returing List of Customers Collections  
             return Ok(items);
+        }
+
+        [HttpGet]
+        [Route("getServiceLogo")]
+        public HttpResponseMessage GetServiceLogo(string path)
+        {
+            if (path == null)
+            {
+                path = "default-placeholder.png";
+            }
+
+            var filePath = HttpContext.Current.Server.MapPath("~/Images/" + path);
+            if (!File.Exists(filePath))
+            {
+                path = "default-placeholder.png";
+                filePath = HttpContext.Current.Server.MapPath("~/Images/" + path);
+            }
+            var ext = Path.GetExtension(filePath);
+
+            var contents = File.ReadAllBytes(filePath);
+
+            MemoryStream ms = new MemoryStream(contents);
+
+            var response = Request.CreateResponse(HttpStatusCode.OK);
+            response.Content = new StreamContent(ms);
+            response.Content.Headers.ContentType = new MediaTypeHeaderValue("image/" + ext);
+
+            return response;
         }
     }
 }
