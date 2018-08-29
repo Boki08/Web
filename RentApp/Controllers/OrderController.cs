@@ -67,7 +67,7 @@ namespace RentApp.Controllers
             Vehicle vehicle= unitOfWork.Vehicles.Find(v=>v.VehicleId==order.VehicleId).FirstOrDefault();
             if (vehicle == null)
             {
-                return NotFound();
+                return BadRequest("Vehicle not found");
             }
 
             AppUser appUser;
@@ -83,12 +83,12 @@ namespace RentApp.Controllers
             }
             catch
             {
-                return Ok();
+                return BadRequest("User not found, try to relog");
             }
            // AppUser user = unitOfWork.AppUsers.Find(u => u.UserId == order.UserId).FirstOrDefault();
             if (appUser == null)
             {
-                return NotFound();
+                return BadRequest("User not found, try to relog");
             }
             order.UserId = appUser.UserId;
 

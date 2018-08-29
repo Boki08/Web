@@ -21,11 +21,13 @@ namespace RentApp.Persistance.Repository
 
         public RentService GetServiceWithOrders(int serviceId)
         {
-            return (from service in DemoContext.RentServices
+            var l= (from service in DemoContext.RentServices
               from vehicle in service.Vehicles
               from order in vehicle.Orders
-              where order.VehicleId == vehicle.VehicleId && vehicle.RentServiceId==service.RentServiceId
-              select service).Include("Orders").ToList().FirstOrDefault();
+              where order.Vehicle.RentServiceId == serviceId
+                    select service).Include("Orders");
+
+            return l.ToList().FirstOrDefault();
            // return DemoContext.RentServices.Include(s=>s.Vehicles).t
              //   .Where(x => x.RentServiceId == serviceId).FirstOrDefault();
         }
