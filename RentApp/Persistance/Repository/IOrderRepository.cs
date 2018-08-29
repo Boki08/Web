@@ -9,6 +9,9 @@ namespace RentApp.Persistance.Repository
 {
     public interface IOrderRepository:IRepository<Order, int>
     {
-
+        IEnumerable<Order> GetAllUserOrders(int pageIndex, int pageSize, int userId);
+        int CountAllUserOrders(int userId);
+        Order GetWithVehicles(int orderId);
+        IEnumerable<Order> GetServiceOrders(int serviceId);
     }
 }

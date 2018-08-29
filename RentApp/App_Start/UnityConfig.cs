@@ -66,7 +66,7 @@ namespace RentApp
             container.RegisterType<IOfficeRepository, OfficeRepository>();
             container.RegisterType<IVehiclePictureRepository, VehiclePictureRepository>();
             container.RegisterType<ITypeOfVehicleRepository, TypeOfVehicleRepository>();
-
+           
 
 
 

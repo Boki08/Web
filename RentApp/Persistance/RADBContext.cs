@@ -14,11 +14,10 @@ namespace RentApp.Persistance
         public DbSet<Service> Services { get; set; }
 
         public DbSet<Comment> Comments { get; set; }
-        public DbSet<Component> Components { get; set; }
+      
         public DbSet<Office> Offices { get; set; }
         public DbSet<OfficePicture> OfficePictures { get; set; }
         public DbSet<Order> Orders { get; set; }
-        public DbSet<Pricing> Pricings { get; set; }
         public DbSet<RentService> RentServices { get; set; }
         public DbSet<AppUser> AppUsers { get; set; }
         public DbSet<Vehicle> Vehicles { get; set; }

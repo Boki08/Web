@@ -28,5 +28,6 @@ namespace RentApp.Models.Entities
         public List<Order> Orders { get; set; }
         public List<Office> Offices { get; set; }
         public List<Vehicle> Vehicles { get; set; }
+        public List<Comment> Comments { get; set; }
     }
 }

@@ -12,6 +12,7 @@ namespace RentApp.Persistance.UnitOfWork
         IRentServiceRepository RentServices { get; set; }
         ICommentRepository Comments { get; set; }
         IAppUserRepository AppUsers { get; set; }
+        
         IOrderRepository Orders { get; set; }
         IVehicleRepository Vehicles { get; set; }
         IVehiclePictureRepository VehiclePictures { get; set; }

@@ -212,7 +212,7 @@ namespace RentApp.Controllers
 
 
            
-            int TotalCount = _unitOfWork.Vehicles.CountServiceVehicles(serviceID);
+            int TotalCount = _unitOfWork.Vehicles.CountAllWithPicsUser(serviceID,available, price, type);
 
            
             int TotalPages = (int)Math.Ceiling(TotalCount / (double)pageSize);
@@ -331,15 +331,24 @@ namespace RentApp.Controllers
             _unitOfWork.Vehicles.Add(vehicle);
             _unitOfWork.Complete();
 
-            for (int i = 0; i < numberOfImages; i++)
+            if (numberOfImages < 1)
             {
-                var postedFile = httpRequest.Files[String.Format("Image{0}", i)];
-                imageName = new string(Path.GetFileNameWithoutExtension(postedFile.FileName).Take(10).ToArray()).Replace(" ", "-");
-                imageName = imageName + DateTime.Now.ToString("yymmssfff") + Path.GetExtension(postedFile.FileName);
-                var filePath = HttpContext.Current.Server.MapPath("~/Images/" + imageName);
-                postedFile.SaveAs(filePath);
-                _unitOfWork.VehiclePictures.Add(new VehiclePicture() { Data = imageName, VehicleId = vehicle.VehicleId });
+               
+                _unitOfWork.VehiclePictures.Add(new VehiclePicture() { Data = "default-placeholder.png", VehicleId = vehicle.VehicleId });
                 _unitOfWork.Complete();
+            }
+            else
+            {
+                for (int i = 0; i < numberOfImages; i++)
+                {
+                    var postedFile = httpRequest.Files[String.Format("Image{0}", i)];
+                    imageName = new string(Path.GetFileNameWithoutExtension(postedFile.FileName).Take(10).ToArray()).Replace(" ", "-");
+                    imageName = imageName + DateTime.Now.ToString("yymmssfff") + Path.GetExtension(postedFile.FileName);
+                    var filePath = HttpContext.Current.Server.MapPath("~/Images/" + imageName);
+                    postedFile.SaveAs(filePath);
+                    _unitOfWork.VehiclePictures.Add(new VehiclePicture() { Data = imageName, VehicleId = vehicle.VehicleId });
+                    _unitOfWork.Complete();
+                }
             }
 
             return Request.CreateResponse(HttpStatusCode.Created);

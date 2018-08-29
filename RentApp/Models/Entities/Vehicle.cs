@@ -38,6 +38,8 @@ namespace RentApp.Models.Entities
         //[JsonIgnore]
         public virtual List<VehiclePicture> VehiclePictures { get; set; }
         [JsonIgnore]
+        public virtual List<Order> Orders { get; set; }
+        [JsonIgnore]
         public virtual TypeOfVehicle TypeOfVehicle { get; set; }
     }
 }

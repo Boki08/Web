@@ -19,14 +19,23 @@ namespace RentApp.Models.Entities
         [ForeignKey("User")]
         public int UserId { get; set; }
         //[Required]
-        //public string DepartureOffice { get; set; }
-        //[Required]
-        //public string ReturnOffice { get; set; }
+        //[ForeignKey("RentService")]
+        //public int RentServiceId { get; set; }
+        [Required]
+        public bool VehicleReturned { get; set; }
+
+        [Required]
+        public int DepartureOfficeId { get; set; }
+        [Required]
+        public int ReturnOfficeId { get; set; }
         [Required]
         public DateTime DepartureDate { get; set; }
         [Required]
         public DateTime ReturnDate { get; set; }
-        [JsonIgnore]
+        [Required]
+        public double Price { get; set; }
+
+        
         public virtual Vehicle Vehicle { get; set; }
         [JsonIgnore]
         public virtual AppUser User { get; set; }
@@ -36,6 +45,10 @@ namespace RentApp.Models.Entities
         [JsonIgnore]
         public virtual Office ReturnOffice { get; set; }
         [JsonIgnore]
+        public virtual RentService RentService { get; set; }
+
+        [JsonIgnore]
         public virtual List<Comment> Comment { get; set; }
+
     }
 }

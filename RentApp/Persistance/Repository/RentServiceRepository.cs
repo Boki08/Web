@@ -13,13 +13,22 @@ namespace RentApp.Persistance.Repository
         {
         }
 
-        //public IEnumerable<RentService> GetAll(int pageIndex, int pageSize)
-       // {
-       //     return DemoContext.RentServices.Skip((pageIndex - 1) * pageSize).Take(pageSize);
-       // }
-      
+       
+
 
 
         protected RADBContext DemoContext { get { return context as RADBContext; } }
+
+        public RentService GetServiceWithOrders(int serviceId)
+        {
+            return (from service in DemoContext.RentServices
+              from vehicle in service.Vehicles
+              from order in vehicle.Orders
+              where order.VehicleId == vehicle.VehicleId && vehicle.RentServiceId==service.RentServiceId
+              select service).Include("Orders").ToList().FirstOrDefault();
+           // return DemoContext.RentServices.Include(s=>s.Vehicles).t
+             //   .Where(x => x.RentServiceId == serviceId).FirstOrDefault();
+        }
+       
     }
 }

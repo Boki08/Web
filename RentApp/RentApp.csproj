@@ -340,15 +340,41 @@
     <Compile Include="Migrations\201808252010554_TypesOfVehiclesID2.Designer.cs">
       <DependentUpon>201808252010554_TypesOfVehiclesID2.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201808270919520_CommentChanges.cs" />
+    <Compile Include="Migrations\201808270919520_CommentChanges.Designer.cs">
+      <DependentUpon>201808270919520_CommentChanges.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201808271920296_OrderOfficesId.cs" />
+    <Compile Include="Migrations\201808271920296_OrderOfficesId.Designer.cs">
+      <DependentUpon>201808271920296_OrderOfficesId.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201808272216385_floatTodouble.cs" />
+    <Compile Include="Migrations\201808272216385_floatTodouble.Designer.cs">
+      <DependentUpon>201808272216385_floatTodouble.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201808281015505_Order_Comment.cs" />
+    <Compile Include="Migrations\201808281015505_Order_Comment.Designer.cs">
+      <DependentUpon>201808281015505_Order_Comment.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201808281245485_VehicleOrders.cs" />
+    <Compile Include="Migrations\201808281245485_VehicleOrders.Designer.cs">
+      <DependentUpon>201808281245485_VehicleOrders.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201808281253382_ServiceOrders.cs" />
+    <Compile Include="Migrations\201808281253382_ServiceOrders.Designer.cs">
+      <DependentUpon>201808281253382_ServiceOrders.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201808281743408_VehicleReturned.cs" />
+    <Compile Include="Migrations\201808281743408_VehicleReturned.Designer.cs">
+      <DependentUpon>201808281743408_VehicleReturned.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\AccountBindingModels.cs" />
     <Compile Include="Models\AccountViewModels.cs" />
     <Compile Include="Models\Entities\Comment.cs" />
-    <Compile Include="Models\Entities\Component.cs" />
     <Compile Include="Models\Entities\Office.cs" />
     <Compile Include="Models\Entities\OfficePicture.cs" />
     <Compile Include="Models\Entities\Order.cs" />
-    <Compile Include="Models\Entities\Pricing.cs" />
     <Compile Include="Models\Entities\RAIdentityUser.cs" />
     <Compile Include="Models\Entities\RentService.cs" />
     <Compile Include="Models\Entities\Services.cs" />
@@ -501,6 +527,27 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201808252010554_TypesOfVehiclesID2.resx">
       <DependentUpon>201808252010554_TypesOfVehiclesID2.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201808270919520_CommentChanges.resx">
+      <DependentUpon>201808270919520_CommentChanges.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201808271920296_OrderOfficesId.resx">
+      <DependentUpon>201808271920296_OrderOfficesId.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201808272216385_floatTodouble.resx">
+      <DependentUpon>201808272216385_floatTodouble.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201808281015505_Order_Comment.resx">
+      <DependentUpon>201808281015505_Order_Comment.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201808281245485_VehicleOrders.resx">
+      <DependentUpon>201808281245485_VehicleOrders.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201808281253382_ServiceOrders.resx">
+      <DependentUpon>201808281253382_ServiceOrders.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201808281743408_VehicleReturned.resx">
+      <DependentUpon>201808281743408_VehicleReturned.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>

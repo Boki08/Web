@@ -17,5 +17,9 @@ namespace RentApp.Persistance.Repository
         {
             return DemoContext.Comments.Where(cm => cm.Order.Vehicle.RentServiceId == serviceId);
         }
+        public Comment GetCommentWithOrder(int commentId)
+        {
+            return DemoContext.Comments.Include(x =>x.Order).Where(x => x.CommentId == commentId).FirstOrDefault();
+        }
     }
 }

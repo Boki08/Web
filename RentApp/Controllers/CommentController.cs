@@ -39,12 +39,27 @@ namespace RentApp.Controllers
         }
 
         // GET: api/Comments/5/3
+        //[HttpGet]
+        //[Route("getComments/{orderId}")]
+        //[ResponseType(typeof(Comment))]
+        //public IHttpActionResult GetComment(int id1)
+        //{
+        //    Comment comment = unitOfWork.Comments.Find(cm => cm.OrderId == id1).FirstOrDefault();
+        //    if (comment == null)
+        //    {
+        //        return NotFound();
+        //    }
+
+        //    return Ok(comment);
+        //}
+
+
         [HttpGet]
-        [Route("getComments/{id1}/{id2}")]
+        [Route("getComment/{orderId}/{userId}")]
         [ResponseType(typeof(Comment))]
-        public IHttpActionResult GetComment(int id1, int id2)
+        public IHttpActionResult GetUserComment(int orderId, int userId)
         {
-            Comment comment = unitOfWork.Comments.Find(cm => cm.OrderId == id1 && cm.UserId == id2).FirstOrDefault();
+            Comment comment = unitOfWork.Comments.Find(x => x.OrderId == orderId && x.UserId == userId).FirstOrDefault();
             if (comment == null)
             {
                 return NotFound();
@@ -53,89 +68,122 @@ namespace RentApp.Controllers
             return Ok(comment);
         }
 
+        [HttpGet]
+        [Route("getCanUserComment/{orderId}/{userId}")]
+        [ResponseType(typeof(string))]
+        public IHttpActionResult GetCanUserComment(int orderId, int userId)
+        {
+            Comment comment = unitOfWork.Comments.Find(x => x.OrderId == orderId && x.UserId == userId).FirstOrDefault();
+
+            if (comment == null)
+            {
+                Order order = unitOfWork.Orders.Find(x => x.OrderId == orderId).FirstOrDefault();
+                if (order.ReturnDate <= DateTime.Now)
+                {
+                    return Ok("canComment");
+                }
+                else
+                {
+                    return Ok("can'tCommentYet");
+                }
+            }
+
+            return Ok("commentExists");
+        }
+
         [HttpPost]
         [Route("postComments")]
         [ResponseType(typeof(Comment))]
-        public IHttpActionResult postComment(Comment comment)
+        public IHttpActionResult PostComment(Comment comment)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+           
 
             RADBContext db = new RADBContext();
             var user = db.Users.FirstOrDefault(u => u.UserName == User.Identity.Name);
 
-            var userRole = user.Roles.First().RoleId;
-            var role = db.Roles.FirstOrDefault(r => r.Id == userRole);
-            bool isAppUser = role.Name.Equals("AppUser");
+            int userId = user.AppUserId;
+            comment.UserId = userId;
+            comment.PostedDate = DateTime.Now;
 
+            Order order = unitOfWork.Orders.GetWithVehicles(comment.OrderId);
 
-            // var user = unitOfWork.AppUsers.Find(u=>u.Name == User.Identity.Name).FirstOrDefault();
-            // var userRole = user.Type;
-            // bool isAppUser = userRole.Equals("AppUser");
-
-
-            // using (var context = new RADBContext())
-            // {
-            //  var orders = from b in context.Orders
-            //                    where (b.UserId == comment.UserId &&
-            //                           b.OrderId == comment.OrderId)
-            //                   select b;
-
-            IEnumerable<Order> orders = unitOfWork.Orders.Find(o => o.UserId == comment.UserId && o.OrderId == comment.OrderId);
-            foreach (Order o in orders)
+            if(order.ReturnDate> comment.PostedDate)
             {
-                if (o.ReturnDate < DateTime.Now)
-                {
-                    try
-                    {
-                        db.Comments.Add(comment);
-                        db.SaveChanges();
-                    }
-
-                    catch
-                    {
-                        return BadRequest("You can add comments after the return!");
-                    }
-
-                    IEnumerable<Comment> comments = unitOfWork.Comments.Find(cm => cm.Order.Vehicle.RentServiceId == comment.Order.Vehicle.RentServiceId);
-
-                    double sum = 0;
-                    double averageGrade;
-
-                    foreach (Comment c in comments)
-                    {
-                        sum += c.Grade;
-                    }
-                    averageGrade = sum / comments.Count();
-
-                    RentService rentService = unitOfWork.RentServices.Find(r=>r.RentServiceId==comment.Order.Vehicle.RentServiceId).FirstOrDefault();
-
-                    if (rentService == null)
-                    {
-                        return BadRequest("Cannot refresh average grade.");
-                    }
-                    rentService.Grade = averageGrade;
-
-                    unitOfWork.RentServices.Update(rentService);
-                    try
-                    {
-                        unitOfWork.Complete();
-                    }
-                    catch (DbUpdateConcurrencyException)
-                    {
-                        return BadRequest("Cannot refresh average grade.");
-                    }
-
-                    //!!!!!!return!!!!!!!!!!!!
-
-                }
-                // }
-
-               
+                return BadRequest("Can't comment before the return date");
             }
-            return Unauthorized();
+
+            
+            RentService service = unitOfWork.RentServices.GetServiceWithOrders(order.Vehicle.RentServiceId);
+
+            
+
+            List<Order> orders = unitOfWork.Orders.GetServiceOrders(service.RentServiceId).ToList();
+            int numOfComments = 0;
+
+            double sumGrades = 0;
+            foreach(Order o in orders)
+            {
+                if (o.Comment.Count > 0)
+                {
+                    numOfComments++;
+                    sumGrades = o.Comment.FirstOrDefault().Grade;
+                }
+            }
+
+            sumGrades += comment.Grade;
+
+            service.Grade = sumGrades / (numOfComments+1);
+
+
+            unitOfWork.Comments.Add(comment);
+            try
+            {
+                unitOfWork.Complete();
+            }
+            catch
+            {
+                return BadRequest("Can't add comment.");
+            }
+
+            unitOfWork.RentServices.Update(service);
+            try
+            {
+                unitOfWork.Complete();
+            }
+            catch 
+            {
+                return BadRequest("Can't refresh average grade.");
+            }
+
+
+            return Ok(comment);
+        }
+
+        [HttpGet]
+        [Route("getServiceComments/{serviceId}")]
+        [ResponseType(typeof(Comment))]
+        public IHttpActionResult GetServiceComments(int serviceId)
+        {
+            List<Comment> comments;
+            try
+            {
+                RentService service = unitOfWork.RentServices.GetServiceWithOrders(serviceId);
+
+                 comments = new List<Comment>();
+
+                foreach (Order order in service.Orders)
+                {
+                    comments.Add(order.Comment.FirstOrDefault());
+                }
+            }
+            catch
+            {
+                return BadRequest("Can't get comments right now");
+            }
+
+
+
+            return Ok(comments);
         }
     }
 }

@@ -34,6 +34,7 @@ namespace RentApp.Persistance.Repository
         {
             return context.Set<TEntity>().Find(id);
         }
+       
 
         public IEnumerable<TEntity> GetAll()
         {
