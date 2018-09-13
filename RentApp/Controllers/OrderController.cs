@@ -77,7 +77,7 @@ namespace RentApp.Controllers
             {
                 var username = User.Identity.Name;
 
-                var user = db.Users.Where(u => u.UserName == username).Include(u1 => u1.AppUser).First();
+                var user = db.Users.Where(u => u.UserName == username).Include(a => a.AppUser).First();
                 appUser = user.AppUser;
                
             }
@@ -89,6 +89,10 @@ namespace RentApp.Controllers
             if (appUser == null)
             {
                 return BadRequest("User not found, try to relog");
+            }
+            else if (appUser.Activated==false)
+            {
+                return BadRequest("Your profile is not activated");
             }
             order.UserId = appUser.UserId;
 
@@ -115,7 +119,7 @@ namespace RentApp.Controllers
             {
                 return BadRequest("Cannot add new order.");
             }
-            return Ok(order);
+            return Created("Order was created",order);
         }
 
         [Authorize(Roles = "AppUser")]
@@ -129,7 +133,7 @@ namespace RentApp.Controllers
             {
                 var username = User.Identity.Name;
 
-                var user = db.Users.Where(u => u.UserName == username).Include(u1 => u1.AppUser).First();
+                var user = db.Users.Where(u => u.UserName == username).Include(a => a.AppUser).First();
                 userId = user.AppUser.UserId;
 
             }
@@ -201,7 +205,7 @@ namespace RentApp.Controllers
             {
                 var username = User.Identity.Name;
 
-                var user = db.Users.Where(u => u.UserName == username).Include(u1 => u1.AppUser).First();
+                var user = db.Users.Where(u => u.UserName == username).Include(a => a.AppUser).First();
                 userId = user.AppUser.UserId;
 
             }
@@ -213,21 +217,24 @@ namespace RentApp.Controllers
 
             Vehicle vehicle = order.Vehicle;
 
-            if (vehicle.Available == false && order.UserId==userId)
+            if (vehicle.Available == false && order.UserId==userId && order.VehicleReturned==false)
             {
                 vehicle.Available = true;
-
                 unitOfWork.Vehicles.Update(vehicle);
+
+                order.VehicleReturned = true;
+                unitOfWork.Orders.Update(order);
 
                 try
                 {
                     unitOfWork.Complete();
-                    return Ok(vehicle);
                 }
                 catch
                 {
                     return BadRequest("Can't return the vehicle.");
                 }
+
+                return Ok(vehicle);
             }
             return BadRequest("Can't return the vehicle.");
         }

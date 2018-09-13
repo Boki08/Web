@@ -25,9 +25,9 @@ namespace RentApp.Models.Entities
         public DateTime PostedDate { get; set; }
         [Required]
         public int Grade { get; set; }
-        [JsonIgnore]
+       // [JsonIgnore]
         public virtual AppUser User { get; set; }
-        [JsonIgnore]
+        //[JsonIgnore]
         public virtual Order Order { get; set; }
         //[JsonIgnore]
         //public virtual RentService RentService { get; set; }

@@ -13,6 +13,7 @@ using Microsoft.AspNet.Identity.Owin;
 using Microsoft.Owin.Security;
 using Microsoft.Owin.Security.Cookies;
 using Microsoft.Owin.Security.OAuth;
+using RentApp.Hubs;
 using RentApp.Models;
 using RentApp.Models.Entities;
 using RentApp.Providers;
@@ -329,6 +330,7 @@ namespace RentApp.Controllers
                 return GetErrorResult(result);
             }
              UserManager.AddToRole(user.Id, "AppUser");
+            NotificationsHub.NotifyAdmin("New User was registered");
             return Ok();
         }
 

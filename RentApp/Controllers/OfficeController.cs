@@ -152,7 +152,7 @@ namespace RentApp.Controllers
         [HttpPost]
         [Route("addOffice")]
         [ResponseType(typeof(Office))]
-        public HttpResponseMessage AddOffice()
+        public IHttpActionResult AddOffice()
         {
             var httpRequest = HttpContext.Current.Request;
 
@@ -183,7 +183,24 @@ namespace RentApp.Controllers
             _unitOfWork.Offices.Add(office);
             _unitOfWork.Complete();
 
-            return Request.CreateResponse(HttpStatusCode.Created);
+            return Created("Office was created", office);
+        }
+
+        [Authorize(Roles = "Manager")]
+        [HttpGet]
+        [Route("deleteOffice/{officeId}")]
+        public IHttpActionResult DeleteOffice(int officeId)
+        {
+            Office office = _unitOfWork.Offices.Get(officeId);
+            if (office == null)
+            {
+                return NotFound();
+            }
+
+            _unitOfWork.Offices.Remove(office);
+            _unitOfWork.Complete();
+
+            return Ok();
         }
     }
 }

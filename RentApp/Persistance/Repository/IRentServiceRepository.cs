@@ -11,7 +11,10 @@ namespace RentApp.Persistance.Repository
     {
         // IEnumerable<RentService> GetAll(int pageIndex, int pageSize);
         //string GetName();
-        RentService GetServiceWithOrders(int serviceId);
-       
+        IEnumerable<RentService> GetAllServicesWithSorting(int pageIndex, int pageSize, int sortingType);
+        RentService GetServiceWithVehicles(int serviceId);
+        RentService GetServiceWithComments(int serviceId);
+
+
     }
 }

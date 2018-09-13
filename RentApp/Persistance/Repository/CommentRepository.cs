@@ -21,5 +21,9 @@ namespace RentApp.Persistance.Repository
         {
             return DemoContext.Comments.Include(x =>x.Order).Where(x => x.CommentId == commentId).FirstOrDefault();
         }
+        //public Comment GetCommentWithOrderUser(int commentId)
+        //{
+        //    return DemoContext.Comments.Include(x => x.Order).Include(x=>x.User).Where(x => x.CommentId == commentId).FirstOrDefault();
+        //}
     }
 }

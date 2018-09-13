@@ -100,34 +100,34 @@ namespace RentApp.Controllers
         //    // Returing List of Customers Collections  
         //    return items;
         //}
-        [HttpPost]
-        [Route("postVehicle")]
-        [ResponseType(typeof(Vehicle))]
-        public IHttpActionResult postVehicle(Vehicle vehicle)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+        //[HttpPost]
+        //[Route("postVehicle")]
+        //[ResponseType(typeof(Vehicle))]
+        //public IHttpActionResult postVehicle(Vehicle vehicle)
+        //{
+        //    if (!ModelState.IsValid)
+        //    {
+        //        return BadRequest(ModelState);
+        //    }
 
-            RentService rentService = _unitOfWork.RentServices.Find(r=>r.RentServiceId==vehicle.RentServiceId).FirstOrDefault();
-            if (rentService == null)
-            {
-                return NotFound();
-            }
+        //    RentService rentService = _unitOfWork.RentServices.Find(r=>r.RentServiceId==vehicle.RentServiceId).FirstOrDefault();
+        //    if (rentService == null)
+        //    {
+        //        return NotFound();
+        //    }
 
-            _unitOfWork.Vehicles.Add(vehicle);
+        //    _unitOfWork.Vehicles.Add(vehicle);
 
-            try
-            {
-                _unitOfWork.Complete();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                return BadRequest("Cannot add vehicle.");
-            }
-            return Ok(vehicle);
-        }
+        //    try
+        //    {
+        //        _unitOfWork.Complete();
+        //    }
+        //    catch (DbUpdateConcurrencyException)
+        //    {
+        //        return BadRequest("Cannot add vehicle.");
+        //    }
+        //    return Ok(vehicle);
+        //}
         [HttpGet]
         [Route("getVehicle/{id}")]
         [ResponseType(typeof(AppUser))]
@@ -150,7 +150,7 @@ namespace RentApp.Controllers
             return Ok(vehicle);
         }
 
-        [Authorize(Roles = "Manager")]
+        [Authorize(Roles = "Manager, Admin")]
         [HttpGet]
         [Route("allServiceVehicles/{pageIndex}/{pageSize}/{serviceID}")]
         public IHttpActionResult GetServiceVehicles(int pageIndex, int pageSize, int serviceID)
@@ -216,13 +216,6 @@ namespace RentApp.Controllers
 
            
             int TotalPages = (int)Math.Ceiling(TotalCount / (double)pageSize);
-
-            
-            var previousPage = pageIndex > 1 ? "Yes" : "No";
-
-           
-            var nextPage = pageIndex < TotalPages ? "Yes" : "No";
-
            
             var paginationMetadata = new
             {
@@ -244,16 +237,23 @@ namespace RentApp.Controllers
         [Authorize(Roles = "Manager")]
         [HttpGet]
         [Route("disableVehicle/{vehicleId}/{enabled}")]
-        public IHttpActionResult DisableVehicle(int vehicleId,bool enabled)
+        public IHttpActionResult DisableVehicle(int vehicleId, bool enabled)
         {
             Vehicle vehicle = _unitOfWork.Vehicles.Get(vehicleId);
 
-            
-            vehicle.Enabled = enabled;
-            _unitOfWork.Vehicles.Update(vehicle);
-            _unitOfWork.Complete();
+            if (vehicle.Available == true)
+            {
 
-            return Ok(vehicle);
+                vehicle.Enabled = enabled;
+                _unitOfWork.Vehicles.Update(vehicle);
+                _unitOfWork.Complete();
+
+                return Ok(vehicle);
+            }
+            else
+            {
+                return BadRequest("Vehicle is currently rented");
+            }
         }
 
 
@@ -303,7 +303,7 @@ namespace RentApp.Controllers
         [HttpPost]
         [Route("addVehicle")]
         [ResponseType(typeof(Vehicle))]
-        public HttpResponseMessage AddVehicle()
+        public IHttpActionResult AddVehicle()
         {
             var httpRequest = HttpContext.Current.Request;
 
@@ -351,7 +351,24 @@ namespace RentApp.Controllers
                 }
             }
 
-            return Request.CreateResponse(HttpStatusCode.Created);
+            return Created("Vehicle was created",vehicle);
+        }
+
+        [Authorize(Roles = "Manager")]
+        [HttpGet]
+        [Route("deleteVehicle/{vehicleId}")]
+        public IHttpActionResult DeleteOffice(int vehicleId)
+        {
+            Vehicle vehicle = _unitOfWork.Vehicles.Get(vehicleId);
+            if (vehicle == null)
+            {
+                return NotFound();
+            }
+
+            _unitOfWork.Vehicles.Remove(vehicle);
+            _unitOfWork.Complete();
+
+            return Ok();
         }
     }
 }

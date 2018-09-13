@@ -14,5 +14,10 @@ namespace RentApp.Persistance.Repository
         {
         }
         protected RADBContext DemoContext { get { return context as RADBContext; } }
+
+        public IEnumerable<TypeOfVehicle> GetAllPaged(int pageIndex, int pageSize)
+        {
+            return DemoContext.TypesOfVehicles.ToList().Skip((pageIndex - 1) * pageSize).Take(pageSize);
+        }
     }
 }

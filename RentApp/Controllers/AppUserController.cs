@@ -30,36 +30,63 @@ namespace RentApp.Controllers
             this._unitOfWork = unitOfWork;
         }
 
-      
+
         /* public IEnumerable<AppUser> GetComments()
          {
              return _unitOfWork.AppUsers.GetAll();
          }*/
 
+        [Authorize(Roles = "Admin")]
         [HttpGet]
-        [Route("allUsers/{pageIndex}/{pageSize}/{type}")]
-        public IHttpActionResult GetAllUsers(int pageIndex, int pageSize,string type)
+        [Route("allUsers/{pageIndex}/{pageSize}/{type}/{editedFirst}/{approvedFirst}")]
+        public IHttpActionResult GetAllUsers(int pageIndex, int pageSize, string type, bool editedFirst, bool approvedFirst)
         {
 
             RADBContext db = new RADBContext();
             var role = db.Roles.SingleOrDefault(m => m.Name == type);
-            var usersByRole = db.Users.Where(m => m.Roles.All(r => r.RoleId == role.Id));
-            var sourceFromBase = _unitOfWork.AppUsers.GetAll();
+            var usersByRole = db.Users.Include(x => x.AppUser).Where(m => m.Roles.All(r => r.RoleId == role.Id));
 
-            var hash = new HashSet<int>();
+            List<AppUser> source = usersByRole.Select(x => x.AppUser).ToList();
 
-            foreach (var user in usersByRole)
-            {
-                hash.Add(user.AppUserId);
-            }
-            List<AppUser> source = new List<AppUser>();
-            foreach (var user in sourceFromBase)
-            {
-                if(hash.Contains(user.UserId))
+            if (type == "AppUser") { 
+                if (editedFirst)
                 {
-                    source.Add(user);
+                    source.OrderBy(x => x.ProfileEdited == true);
+
+                }
+                else if (approvedFirst)
+                {
+                    source.OrderBy(x => x.Activated == true);
+                }
+        }
+            else
+            {
+                if (editedFirst)
+                {
+                    source.OrderBy(x => x.Activated == true);
+
+                }
+                else if (approvedFirst)
+                {
+                    source.OrderBy(x => x.Activated == false);
                 }
             }
+           // var sourceFromBase = _unitOfWork.AppUsers.GetAll();
+
+           // var hash = new HashSet<int>();
+
+           // foreach (var user in usersByRole)
+           // {
+           //     hash.Add(user.AppUserId);
+           // }
+           ////List<AppUser> source = new List<AppUser>();
+           // foreach (var user in sourceFromBase)
+           // {
+           //     if(hash.Contains(user.UserId))
+           //     {
+           //         source.Add(user);
+           //     }
+           // }
             // Get's No of Rows Count   
             int count = source.Count();
 
@@ -107,6 +134,7 @@ namespace RentApp.Controllers
             IEnumerable<AppUser> users = _unitOfWork.AppUsers.GetAll();
             return Ok(users);
         }
+        [Authorize(Roles = "Admin")]
         [HttpGet]
         [Route("getDocumentPicture")]
         public HttpResponseMessage GetDocumentPicture(string path)
@@ -167,47 +195,47 @@ namespace RentApp.Controllers
             {
                 var username = User.Identity.Name;
                
-                var user = db.Users.Where(u => u.UserName == username).Include(u1 => u1.AppUser).First();
+                var user = db.Users.Where(u => u.UserName == username).Include(a => a.AppUser).First();
                 var appUser = user.AppUser;
                 return Ok(appUser);
             }
             catch
             {
-                return Ok();
+                return BadRequest("Data could not be retrieved, try to relog.");
             }
         }
 
        
 
-        [HttpPost]
-        [Route("addAppUser")]
-        [ResponseType(typeof(AppUser))]
-        public IHttpActionResult addAppUser([FromBody]AppUser appUser)
-        {
-            //if (!ModelState.IsValid)
-            //{
-            //    return BadRequest(ModelState);
-            //}
+        //[HttpPost]
+        //[Route("addAppUser")]
+        //[ResponseType(typeof(AppUser))]
+        //public IHttpActionResult addAppUser([FromBody]AppUser appUser)
+        //{
+        //    //if (!ModelState.IsValid)
+        //    //{
+        //    //    return BadRequest(ModelState);
+        //    //}
            
-            AppUser hj = _unitOfWork.AppUsers.Find(u => u.UserId == 1).FirstOrDefault();
-            _unitOfWork.AppUsers.Add(appUser);
+        //    AppUser hj = _unitOfWork.AppUsers.Find(u => u.UserId == 1).FirstOrDefault();
+        //    _unitOfWork.AppUsers.Add(appUser);
 
-            try
-            {
-                int a=_unitOfWork.Complete();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                return BadRequest("Cannot refresh average grade.");
-            }
+        //    try
+        //    {
+        //        int a=_unitOfWork.Complete();
+        //    }
+        //    catch (DbUpdateConcurrencyException)
+        //    {
+        //        return BadRequest("Cannot refresh average grade.");
+        //    }
 
-            return Ok(appUser);
-        }
+        //    return Ok(appUser);
+        //}
 
         [HttpPost]
         [Route("editAppUser")]
         [ResponseType(typeof(AppUser))]
-        public HttpResponseMessage EditUser()
+        public IHttpActionResult EditUser()
         {
             var httpRequest = HttpContext.Current.Request;
 
@@ -235,7 +263,23 @@ namespace RentApp.Controllers
             _unitOfWork.AppUsers.Update(appUser);
             _unitOfWork.Complete();
 
-            return Request.CreateResponse(HttpStatusCode.Created);
+            return Ok("User edited");
+        }
+
+        [HttpGet]
+        [Route("deleteUser/{userId}")]
+        public IHttpActionResult DeleteUser(int userId)
+        {
+            AppUser appUser = _unitOfWork.AppUsers.Get(userId);
+            if (appUser == null)
+            {
+                return NotFound();
+            }
+
+            _unitOfWork.AppUsers.Remove(appUser);
+            _unitOfWork.Complete();
+
+            return Ok();
         }
 
         [Authorize(Roles = "Admin")]
@@ -296,5 +340,31 @@ namespace RentApp.Controllers
 
             return Ok(appUser);
         }
+        [HttpGet]
+        [Route("canUserOrder")]
+        public IHttpActionResult CanUserOrder()
+        {
+            RADBContext db = new RADBContext();
+            try
+            {
+                var username = User.Identity.Name;
+
+                var user = db.Users.Where(u => u.UserName == username).Include(a => a.AppUser).First();
+                var appUser = user.AppUser;
+                if (appUser.Activated)
+                {
+                    return Ok(true);
+                }
+                else
+                {
+                    return BadRequest("Your profile is not activated");
+                }
+            }
+            catch
+            {
+                return BadRequest("User not found, try to relog");
+            }
+        }
+        
     }
 }
