@@ -1,4 +1,6 @@
 ﻿using Newtonsoft.Json;
+using RentApp.Crypting;
+using RentApp.ETag;
 using RentApp.Models.Entities;
 using RentApp.Persistance;
 using RentApp.Persistance.UnitOfWork;
@@ -12,9 +14,11 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Mail;
+using System.Text;
 using System.Web;
 using System.Web.Http;
 using System.Web.Http.Description;
+using System.Web.Http.Results;
 
 namespace RentApp.Controllers
 {
@@ -48,7 +52,20 @@ namespace RentApp.Controllers
 
             List<AppUser> source = usersByRole.Select(x => x.AppUser).ToList();
 
-            if (type == "AppUser") { 
+            if (source == null || source.Count() < 1)
+            {
+                if (type == "AppUser")
+                {
+                    return BadRequest("There are no Users");
+                }
+                else
+                {
+                    return BadRequest("There are no Managers");
+                }
+            }
+
+            if (type == "AppUser")
+            {
                 if (editedFirst)
                 {
                     source.OrderBy(x => x.ProfileEdited == true);
@@ -58,7 +75,7 @@ namespace RentApp.Controllers
                 {
                     source.OrderBy(x => x.Activated == true);
                 }
-        }
+            }
             else
             {
                 if (editedFirst)
@@ -71,30 +88,10 @@ namespace RentApp.Controllers
                     source.OrderBy(x => x.Activated == false);
                 }
             }
-           // var sourceFromBase = _unitOfWork.AppUsers.GetAll();
 
-           // var hash = new HashSet<int>();
-
-           // foreach (var user in usersByRole)
-           // {
-           //     hash.Add(user.AppUserId);
-           // }
-           ////List<AppUser> source = new List<AppUser>();
-           // foreach (var user in sourceFromBase)
-           // {
-           //     if(hash.Contains(user.UserId))
-           //     {
-           //         source.Add(user);
-           //     }
-           // }
             // Get's No of Rows Count   
             int count = source.Count();
 
-            // Parameter is passed from Query string if it is null then it default Value will be pageNumber:1  
-           // int CurrentPage = pagingparametermodel.pageNumber;
-
-            // Parameter is passed from Query string if it is null then it default Value will be pageSize:20  
-           // int PageSize = pagingparametermodel.pageSize;
 
             // Display TotalCount to Records to User  
             int TotalCount = count;
@@ -105,11 +102,6 @@ namespace RentApp.Controllers
             // Returns List of Customer after applying Paging   
             var items = source.Skip((pageIndex - 1) * pageSize).Take(pageSize).ToList();
 
-            // if CurrentPage is greater than 1 means it has previousPage  
-            var previousPage = pageIndex > 1 ? "Yes" : "No";
-
-            // if TotalPages is greater than CurrentPage means it has nextPage  
-            var nextPage = pageIndex < TotalPages ? "Yes" : "No";
 
             // Object which we are going to send in header   
             var paginationMetadata = new
@@ -117,9 +109,7 @@ namespace RentApp.Controllers
                 totalCount = TotalCount,
                 pageSize,
                 currentPage = pageIndex,
-                totalPages = TotalPages,
-                previousPage,
-                nextPage
+                totalPages = TotalPages
             };
 
             // Setting Header  
@@ -127,13 +117,8 @@ namespace RentApp.Controllers
             HttpContext.Current.Response.Headers.Add("Paging-Headers", JsonConvert.SerializeObject(paginationMetadata));
             // Returing List of Customers Collections  
             return Ok(items);
-
-
-
-
-            IEnumerable<AppUser> users = _unitOfWork.AppUsers.GetAll();
-            return Ok(users);
         }
+
         [Authorize(Roles = "Admin")]
         [HttpGet]
         [Route("getDocumentPicture")]
@@ -151,8 +136,14 @@ namespace RentApp.Controllers
                 filePath = HttpContext.Current.Server.MapPath("~/Images/" + path);
             }
             var ext = Path.GetExtension(filePath);
-            
-            var contents = File.ReadAllBytes(filePath);
+
+
+            byte[] contents=null;
+
+            string eSecretKey = SecretKey.LoadKey(HttpRuntime.AppDomainAppPath + "Images\\SecretKey.txt");
+            AES_Symm_Algorithm.DecryptFile(filePath, out contents, eSecretKey);
+
+            //var contents = File.ReadAllBytes(filePath);
 
             MemoryStream ms = new MemoryStream(contents);
 
@@ -162,28 +153,28 @@ namespace RentApp.Controllers
 
             return response;
         }
-        // GET: api/AppUser/5/
-        [HttpGet]
-        [Route("getUser/{id}")]
-        [ResponseType(typeof(AppUser))]
-        public IHttpActionResult GetAppIdUser(int id)
-        {
-            AppUser user;
-            try
-            {
-                user = _unitOfWork.AppUsers.Find(u => u.UserId == id).FirstOrDefault();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                return BadRequest("Cannot refresh average grade.");
-            }
-            if (user == null)
-            {
-                return NotFound();
-            }
+        //// GET: api/AppUser/5/
+        //[HttpGet]/////////skoro zakomentarisano
+        //[Route("getUser/{id}")]
+        //[ResponseType(typeof(AppUser))]
+        //public IHttpActionResult GetAppIdUser(int id)
+        //{
+        //    AppUser user;
+        //    try
+        //    {
+        //        user = _unitOfWork.AppUsers.Find(u => u.UserId == id).FirstOrDefault();
+        //    }
+        //    catch 
+        //    {
+        //        return BadRequest("User does not exist");
+        //    }
+        //    if (user == null)
+        //    {
+        //        return NotFound();
+        //    }
 
-            return Ok(user);
-        }
+        //    return Ok(user);
+        //}
 
         [HttpGet]
         [Route("getCurrentUser")]
@@ -197,6 +188,18 @@ namespace RentApp.Controllers
                
                 var user = db.Users.Where(u => u.UserName == username).Include(a => a.AppUser).First();
                 var appUser = user.AppUser;
+
+
+                var eTag = ETagHelper.GetETag(Encoding.UTF8.GetBytes(appUser.ToString()));
+                HttpContext.Current.Response.Headers.Add("Access-Control-Expose-Headers", ETagHelper.ETAG_HEADER);
+                HttpContext.Current.Response.Headers.Add(ETagHelper.ETAG_HEADER, JsonConvert.SerializeObject(eTag));
+                // HttpContext.Current.Response.Headers.Add(ETAG_HEADER, eTag);
+
+                if (HttpContext.Current.Request.Headers.Get(ETagHelper.MATCH_HEADER) != null && HttpContext.Current.Request.Headers[ETagHelper.MATCH_HEADER].Trim('"') == eTag)
+                    return new StatusCodeResult(HttpStatusCode.NotModified, new HttpRequestMessage());
+
+
+
                 return Ok(appUser);
             }
             catch
@@ -240,10 +243,35 @@ namespace RentApp.Controllers
             var httpRequest = HttpContext.Current.Request;
 
             string imageName = null;
-           
-            
 
-            AppUser appUser = _unitOfWork.AppUsers.Get(Int32.Parse(httpRequest["UserId"]));
+
+            //RADBContext db = new RADBContext();
+            AppUser appUser;
+            try
+            {
+                var username = User.Identity.Name;
+
+                var user = _unitOfWork.AppUsers.Find(u => u.Email == username).FirstOrDefault();
+                appUser = user;
+               
+            }
+            catch
+            {
+                return BadRequest("Data could not be retrieved, try to relog.");
+            }
+
+
+            var eTag = ETagHelper.GetETag(Encoding.UTF8.GetBytes(appUser.ToString()));
+            HttpContext.Current.Response.Headers.Add("Access-Control-Expose-Headers", ETagHelper.ETAG_HEADER);
+            HttpContext.Current.Response.Headers.Add(ETagHelper.ETAG_HEADER, JsonConvert.SerializeObject(eTag));
+            //HttpContext.Current.Response.Headers.Add(ETAG_HEADER, eTag);
+
+            if (HttpContext.Current.Request.Headers.Get(ETagHelper.MATCH_HEADER) == null || HttpContext.Current.Request.Headers[ETagHelper.MATCH_HEADER].Trim('"') != eTag)
+            {
+                return new StatusCodeResult(HttpStatusCode.PreconditionFailed, new HttpRequestMessage());
+
+            }
+
             appUser.FullName = httpRequest["FullName"];
             appUser.BirthDate = DateTime.Parse(httpRequest["BirthDate"]);
             appUser.Email = httpRequest["Email"];
@@ -255,10 +283,23 @@ namespace RentApp.Controllers
                 imageName = new string(Path.GetFileNameWithoutExtension(postedFile.FileName).Take(10).ToArray()).Replace(" ", "-");
                 imageName = imageName + DateTime.Now.ToString("yymmssfff") + Path.GetExtension(postedFile.FileName);
                 var filePath = HttpContext.Current.Server.MapPath("~/Images/" + imageName);
-                postedFile.SaveAs(filePath);
+                //postedFile.SaveAs(filePath);
                 appUser.DocumentPicture = imageName;
+
+             
+
+                byte[] fileData = null;
+                using (var binaryReader = new BinaryReader(postedFile.InputStream))
+                {
+                    fileData = binaryReader.ReadBytes(postedFile.ContentLength);
+                }
+                //postedFile.InputStream.Write(file,0,postedFile.ContentLength);
+
+                string eSecretKey = SecretKey.LoadKey(HttpRuntime.AppDomainAppPath + "Images\\SecretKey.txt");
+                AES_Symm_Algorithm.EncryptFile(fileData, filePath, eSecretKey);
             }
 
+           
 
             _unitOfWork.AppUsers.Update(appUser);
             _unitOfWork.Complete();
@@ -276,9 +317,20 @@ namespace RentApp.Controllers
                 return NotFound();
             }
 
-            _unitOfWork.AppUsers.Remove(appUser);
-            _unitOfWork.Complete();
+            try
+            {
+                if (File.Exists(HttpRuntime.AppDomainAppPath + "Images\\" + appUser.DocumentPicture))
+                {
+                    File.Delete(HttpRuntime.AppDomainAppPath + "Images\\" + appUser.DocumentPicture);
+                }
 
+                _unitOfWork.AppUsers.Remove(appUser);
+                _unitOfWork.Complete();
+            }
+            catch
+            {
+                return BadRequest("User could not be deleted");
+            }
             return Ok();
         }
 
@@ -290,9 +342,12 @@ namespace RentApp.Controllers
         {
 
             AppUser appUser = _unitOfWork.AppUsers.Get(userId);
-
-             //MailMessage mail = new MailMessage("foksfak@gmail.com", appUser.Email);
-             MailMessage mail = new MailMessage("easyrent.e3@gmail.com", "easyrent.e3@gmail.com");
+            if (appUser == null)
+            {
+                return NotFound();
+            }
+            
+            MailMessage mail = new MailMessage("easyrent.e3@gmail.com", "easyrent.e3@gmail.com");
             SmtpClient client = new SmtpClient();
             client.Port = 587;
             client.DeliveryMethod = SmtpDeliveryMethod.Network;
@@ -301,8 +356,7 @@ namespace RentApp.Controllers
             client.Host = "smtp.gmail.com";
             client.EnableSsl = true;
             mail.From = new MailAddress("easyrent.e3@gmail.com");
-            // mail.To.Add( appUser.Email);
-            mail.To.Add("bojan.wow95@gmail.com");
+            mail.To.Add(appUser.Email);
             
 
 

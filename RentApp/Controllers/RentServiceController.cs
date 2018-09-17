@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using RentApp.ETag;
 using RentApp.Hubs;
 using RentApp.Models;
 using RentApp.Models.Entities;
@@ -12,9 +13,11 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text;
 using System.Web;
 using System.Web.Http;
 using System.Web.Http.Description;
+using System.Web.Http.Results;
 
 namespace RentApp.Controllers
 {
@@ -35,11 +38,33 @@ namespace RentApp.Controllers
 
         [HttpGet]
         [Route("getRentService/{serviceId}")]
-        public IHttpActionResult GetServiceService(int serviceId)
+        public IHttpActionResult GetRentService(int serviceId)
         {
-            var source = _unitOfWork.RentServices.Find(x => x.RentServiceId == serviceId);
+            //var source = _unitOfWork.RentServices.Find(x => x.RentServiceId == serviceId);
 
-            return Ok(source);
+            RentService service;
+            try
+            {
+                service = _unitOfWork.RentServices.Find(x => x.RentServiceId == serviceId).FirstOrDefault();
+            }
+            catch
+            {
+                return NotFound();
+            }
+            if (service == null)
+            {
+                return BadRequest("Rent Service does not exist");
+            }
+
+            var eTag = ETagHelper.GetETag(Encoding.UTF8.GetBytes(service.ToString()));
+            HttpContext.Current.Response.Headers.Add("Access-Control-Expose-Headers", ETagHelper.ETAG_HEADER);
+            HttpContext.Current.Response.Headers.Add(ETagHelper.ETAG_HEADER, JsonConvert.SerializeObject(eTag));
+            // HttpContext.Current.Response.Headers.Add(ETAG_HEADER, eTag);
+
+            if (HttpContext.Current.Request.Headers.Get(ETagHelper.MATCH_HEADER) != null && HttpContext.Current.Request.Headers[ETagHelper.MATCH_HEADER].Trim('"') == eTag)
+                return new StatusCodeResult(HttpStatusCode.NotModified, new HttpRequestMessage());
+
+            return Ok(service);
 
         }
 
@@ -50,23 +75,10 @@ namespace RentApp.Controllers
             //var source = _unitOfWork.RentServices.GetAll();
             var items = _unitOfWork.RentServices.GetAllServicesWithSorting(pageIndex, pageSize, sortType).ToList();
 
-
-            // Get's No of Rows Count   
-            //   int count = _unitOfWork.RentServices.CountElements();
-
-            // Parameter is passed from Query string if it is null then it default Value will be pageNumber:1  
-            //int CurrentPage = pagingparametermodel.pageNumber;
-
-            // Parameter is passed from Query string if it is null then it default Value will be pageSize:20  
-            //int PageSize = pagingparametermodel.pageSize;
-
-            // Display TotalCount to Records to User  
-
-
-            // Returns List of Customer after applying Paging   
-            //var items = source.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();
-
-            //var items = _unitOfWork.RentServices.GetAll(pageIndex, pageSize);
+            if(items==null || items.Count < 1)
+            {
+                return BadRequest("There are no Rent Services"); 
+            }
 
             int count = items.Count();
 
@@ -77,11 +89,6 @@ namespace RentApp.Controllers
             // Calculating Totalpage by Dividing (No of Records / Pagesize)  
             int TotalPages = (int)Math.Ceiling(count / (double)pageSize);
 
-            // if CurrentPage is greater than 1 means it has previousPage  
-            var previousPage = pageIndex > 1 ? "Yes" : "No";
-
-            // if TotalPages is greater than CurrentPage means it has nextPage  
-            var nextPage = pageIndex < TotalPages ? "Yes" : "No";
 
             // Object which we are going to send in header   
             var paginationMetadata = new
@@ -89,9 +96,7 @@ namespace RentApp.Controllers
                 totalCount = TotalCount,
                 pageSize,
                 currentPage = pageIndex,
-                totalPages = TotalPages,
-                previousPage,
-                nextPage
+                totalPages = TotalPages
             };
 
             // Setting Header  
@@ -154,17 +159,87 @@ namespace RentApp.Controllers
                 service.Logo = imageName;
             }
 
-
-            _unitOfWork.RentServices.Add(service);
-            _unitOfWork.Complete();
-
+            try
+            {
+                _unitOfWork.RentServices.Add(service);
+                _unitOfWork.Complete();
+            }
+            catch
+            {
+                return BadRequest("Rent Service could not be added");
+            }
             NotificationsHub.NotifyAdmin("New Rent Service was added");
 
             return Created("Rent Service was created", service);
         }
 
 
+        [Authorize(Roles = "Manager")]
+        [HttpPost]
+        [Route("editRentService")]
+        [ResponseType(typeof(RentService))]
+        public IHttpActionResult EditRentService()
+        {
 
+
+            var httpRequest = HttpContext.Current.Request;
+
+
+            int serviceId = Int32.Parse(httpRequest["RentServiceId"]);
+            RentService service = _unitOfWork.RentServices.Get(serviceId);
+
+            if (service == null)
+            {
+                return BadRequest("Rent Service does not exist");
+            }
+
+
+            var eTag = ETagHelper.GetETag(Encoding.UTF8.GetBytes(service.ToString()));
+            HttpContext.Current.Response.Headers.Add("Access-Control-Expose-Headers", ETagHelper.ETAG_HEADER);
+            HttpContext.Current.Response.Headers.Add(ETagHelper.ETAG_HEADER, JsonConvert.SerializeObject(eTag));
+            //HttpContext.Current.Response.Headers.Add(ETAG_HEADER, eTag);
+
+            if (HttpContext.Current.Request.Headers.Get(ETagHelper.MATCH_HEADER) == null || HttpContext.Current.Request.Headers[ETagHelper.MATCH_HEADER].Trim('"') != eTag)
+            {
+                return new StatusCodeResult(HttpStatusCode.PreconditionFailed, new HttpRequestMessage());
+
+            }
+
+
+            string imageName = null;
+
+
+
+            //RentService service = new RentService();
+            service.Name = httpRequest["Name"];
+            service.Description = httpRequest["Description"];
+            service.Email = httpRequest["Email"];
+            service.Activated = false;
+            service.ServiceEdited = true;
+
+
+
+            var postedFile = httpRequest.Files["Logo"];
+            imageName = new string(Path.GetFileNameWithoutExtension(postedFile.FileName).Take(10).ToArray()).Replace(" ", "-");
+            imageName = imageName + DateTime.Now.ToString("yymmssfff") + Path.GetExtension(postedFile.FileName);
+            var filePath = HttpContext.Current.Server.MapPath("~/Images/" + imageName);
+            postedFile.SaveAs(filePath);
+            service.Logo = imageName;
+
+
+            try
+            {
+                _unitOfWork.RentServices.Update(service);
+                _unitOfWork.Complete();
+            }
+            catch
+            {
+                return BadRequest("Rent Service could not be edited");
+            }
+            NotificationsHub.NotifyAdmin("New Rent Service was edited");
+
+            return Created("Rent Service was edited", service);
+        }
 
         [HttpGet]
         [Route("getAllRentServicesManager/{pageIndex}/{pageSize}/{isApproved}/{noOffices}/{noVehicles}")]
@@ -192,14 +267,13 @@ namespace RentApp.Controllers
                 source = _unitOfWork.RentServices.Find(x => x.Activated == false && x.Offices.Count > 0 && x.Vehicles.Count > 0).ToList();
             }
 
+            if(source==null || source.Count < 1)
+            {
+                return BadRequest("There are no Rent Services");
+            }
             // Get's No of Rows Count   
             int count = source.Count();
 
-            // Parameter is passed from Query string if it is null then it default Value will be pageNumber:1  
-            // int CurrentPage = pagingparametermodel.pageNumber;
-
-            // Parameter is passed from Query string if it is null then it default Value will be pageSize:20  
-            //int PageSize = pagingparametermodel.pageSize;
 
             // Display TotalCount to Records to User  
             int TotalCount = count;
@@ -261,9 +335,9 @@ namespace RentApp.Controllers
 
             }
 
-            if(source==null || source.Count() == 0)
+            if(source==null || source.Count()< 0)
             {
-                return Ok(source);
+                return BadRequest("There are no Rent Services");
             }
 
             if (sort == "approvedFirst")
@@ -364,9 +438,21 @@ namespace RentApp.Controllers
                 return NotFound();
             }
 
-            _unitOfWork.RentServices.Remove(rentService);
-            _unitOfWork.Complete();
+            try
+            {
 
+                if (File.Exists("~/Images/" + rentService.Logo))
+                {
+                    File.Delete("~/Images/" + rentService.Logo);
+                }
+
+                _unitOfWork.RentServices.Remove(rentService);
+                _unitOfWork.Complete();
+            }
+            catch
+            {
+                return BadRequest("Rent Service could not be deleted");
+            }
             return Ok();
         }
         [Authorize(Roles = "Admin")]
@@ -383,10 +469,16 @@ namespace RentApp.Controllers
             rentService.Activated = activated;
             rentService.ServiceEdited = false;
 
+            try
+            {
 
-            _unitOfWork.RentServices.Update(rentService);
-            _unitOfWork.Complete();
-
+                _unitOfWork.RentServices.Update(rentService);
+                _unitOfWork.Complete();
+            }
+            catch
+            {
+                return BadRequest("Rent Service cound not be activated");
+            }
             return Ok(string.Format("Rent Service was {0}",activated==true?"activated":"deactivated"));
         }
     }

@@ -42,11 +42,11 @@ namespace RentApp.Controllers
         public IHttpActionResult GetVehicleTypesPaged(int pageIndex, int pageSize)
         {
             var source= _unitOfWork.TypesOfVehicles.GetAllPaged(pageIndex, pageSize);
-
-            if(source==null || source.Count() < 1)
+            if (source == null || source.Count() < 1)
             {
                 return BadRequest("There are no Vehicle Types");
             }
+           
 
             int TotalCount = _unitOfWork.TypesOfVehicles.CountElements();
 

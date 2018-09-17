@@ -12,10 +12,14 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Cryptography;
+using System.Text;
 using System.Web;
 using System.Web.Hosting;
 using System.Web.Http;
 using System.Web.Http.Description;
+using System.Web.Http.Results;
+using RentApp.ETag;
 
 namespace RentApp.Controllers
 {
@@ -23,6 +27,7 @@ namespace RentApp.Controllers
     public class VehicleController : ApiController
     {
         private readonly IUnitOfWork _unitOfWork;
+       
 
         public VehicleController(IUnitOfWork unitOfWork)
         {
@@ -128,28 +133,46 @@ namespace RentApp.Controllers
         //    }
         //    return Ok(vehicle);
         //}
+        
         [HttpGet]
         [Route("getVehicle/{id}")]
         [ResponseType(typeof(AppUser))]
-        public IHttpActionResult GetVehicler(int id)
+        public IHttpActionResult GetVehicle(int id)
         {
             Vehicle vehicle;
             try
             {
                 vehicle = _unitOfWork.Vehicles.Find(u => u.VehicleId == id).FirstOrDefault();
             }
-            catch (DbUpdateConcurrencyException)
-            {
-                return BadRequest("Cannot refresh average grade.");
-            }
-            if (vehicle == null)
+            catch 
             {
                 return NotFound();
             }
+            if (vehicle == null)
+            {
+                return BadRequest("Vehicle does not exist");
+            }
+           
+
+            var eTag = ETagHelper.GetETag(Encoding.UTF8.GetBytes(vehicle.ToString()));
+            HttpContext.Current.Response.Headers.Add("Access-Control-Expose-Headers", ETagHelper.ETAG_HEADER);
+            HttpContext.Current.Response.Headers.Add(ETagHelper.ETAG_HEADER, JsonConvert.SerializeObject(eTag));
+           // HttpContext.Current.Response.Headers.Add(ETAG_HEADER, eTag);
+
+            if (HttpContext.Current.Request.Headers.Get(ETagHelper.MATCH_HEADER) !=null &&HttpContext.Current.Request.Headers[ETagHelper.MATCH_HEADER].Trim('"') == eTag)
+                return new StatusCodeResult(HttpStatusCode.NotModified, new HttpRequestMessage());
 
             return Ok(vehicle);
         }
-
+        //private static string GetETag(byte[] contentBytes)
+        //{
+        //    using (var md5 = MD5.Create())
+        //    {
+        //        var hash = md5.ComputeHash(contentBytes);
+        //        string hex = BitConverter.ToString(hash);
+        //        return hex.Replace("-", "");
+        //    }
+        //}
         [Authorize(Roles = "Manager, Admin")]
         [HttpGet]
         [Route("allServiceVehicles/{pageIndex}/{pageSize}/{serviceID}")]
@@ -158,7 +181,14 @@ namespace RentApp.Controllers
             //var source = _unitOfWork.Vehicles.Find(x => x.RentServiceId == serviceID);
             var source = _unitOfWork.Vehicles.GetAllWithPics(pageIndex,pageSize, serviceID).ToList();
 
-
+            if (source == null)
+            {
+                return NotFound();
+            }
+            else if (source.Count<1)
+            {
+                return BadRequest("There are no Vehicles");
+            }
             // Get's No of Rows Count   
             //int count = source.Count();
 
@@ -210,8 +240,16 @@ namespace RentApp.Controllers
             
             var source = _unitOfWork.Vehicles.GetAllWithPicsUser(pageIndex, pageSize, serviceID,available,price,type).ToList();
 
+            if (source == null)
+            {
+                return NotFound();
+            }
+            else if (source.Count < 1)
+            {
+                return BadRequest("There are no Vehicles");
+            }
 
-           
+
             int TotalCount = _unitOfWork.Vehicles.CountAllWithPicsUser(serviceID,available, price, type);
 
            
@@ -351,13 +389,112 @@ namespace RentApp.Controllers
                 }
             }
 
-            return Created("Vehicle was created",vehicle);
+            return Ok("Vehicle was created");
+        }
+
+        [Authorize(Roles = "Manager")]
+        [HttpPost]
+        [Route("editVehicle")]
+        [ResponseType(typeof(Vehicle))]
+        public IHttpActionResult EditVehicle()
+        {
+            var httpRequest = HttpContext.Current.Request;
+
+            int vehicleId = Int32.Parse(httpRequest["VehicleId"]);
+            Vehicle vehicle = _unitOfWork.Vehicles.Get(vehicleId);
+
+            if (vehicle == null)
+            {
+                return BadRequest("Office does not exist");
+            }
+
+            var eTag = ETagHelper.GetETag(Encoding.UTF8.GetBytes(vehicle.ToString()));
+            HttpContext.Current.Response.Headers.Add("Access-Control-Expose-Headers", ETagHelper.ETAG_HEADER);
+            HttpContext.Current.Response.Headers.Add(ETagHelper.ETAG_HEADER, JsonConvert.SerializeObject(eTag));
+            //HttpContext.Current.Response.Headers.Add(ETAG_HEADER, eTag);
+
+            if (HttpContext.Current.Request.Headers.Get(ETagHelper.MATCH_HEADER) == null || HttpContext.Current.Request.Headers[ETagHelper.MATCH_HEADER].Trim('"') != eTag)
+            {
+                return new StatusCodeResult(HttpStatusCode.PreconditionFailed, new HttpRequestMessage());
+               
+            }
+            
+
+
+            int numberOfImages = Int32.Parse(httpRequest["ImagesNum"]);
+            //Vehicle vehicle = new Vehicle();
+            vehicle.Model = httpRequest["Model"];
+            vehicle.Description = httpRequest["Description"];
+            vehicle.Manufacturer = httpRequest["Manufacturer"];
+            vehicle.YearOfManufacturing = httpRequest["YearOfManufacturing"];
+            //vehicle.RentServiceId = Int32.Parse(httpRequest["RentServiceId"]);
+            //vehicle.Available = true;
+            //vehicle.Enabled = false;
+            vehicle.TypeId = Int32.Parse(httpRequest["TypeId"]);
+            vehicle.HourlyPrice = double.Parse(httpRequest["HourlyPrice"]);
+
+            try
+            {
+
+                _unitOfWork.Vehicles.Update(vehicle);
+                _unitOfWork.Complete();
+            }
+            catch
+            {
+                return BadRequest("Vehicle could not be editer");
+            }
+
+            List<VehiclePicture> pictures = _unitOfWork.VehiclePictures.Find(x => x.VehicleId == vehicleId).ToList();
+
+
+            if (numberOfImages > 0)
+            {
+                List<PicData> picsData = new List<PicData>();
+                for (int i = 0; i < numberOfImages; i++)
+                {
+                    var postedFile = httpRequest.Files[String.Format("Image{0}", i)];
+                    var imgName = new string(Path.GetFileNameWithoutExtension(postedFile.FileName).ToArray()).Replace(" ", "-") + Path.GetExtension(postedFile.FileName);
+                    if (imgName == "default-placeholder.png")
+                        continue;
+                    picsData.Add(new PicData() { name = imgName, position = i});
+                }
+                foreach (VehiclePicture picture in pictures)
+                {
+                    PicData picData = picsData.Find(x => x.name == picture.Data);
+                    if (picData == null)
+                    {
+                        if (File.Exists(HttpRuntime.AppDomainAppPath + "Images\\" + picture.Data))
+                        {
+                            File.Delete(HttpRuntime.AppDomainAppPath + "Images\\" + picture.Data);
+                        }
+                        _unitOfWork.VehiclePictures.Remove(picture);
+                        _unitOfWork.Complete();
+                    }
+                    else
+                    {
+                        picsData.Remove(picData);
+                    }
+                }
+
+                foreach (PicData picData in picsData)
+                {
+                    var postedFile = httpRequest.Files[String.Format("Image{0}", picData.position)];
+                    picData.name = new string(Path.GetFileNameWithoutExtension(postedFile.FileName).Take(10).ToArray()).Replace(" ", "-");
+                    picData.name = picData.name + DateTime.Now.ToString("yymmssfff") + Path.GetExtension(postedFile.FileName);
+                    var filePath = HttpContext.Current.Server.MapPath("~/Images/" + picData.name);
+                    postedFile.SaveAs(filePath);
+                    _unitOfWork.VehiclePictures.Add(new VehiclePicture() { Data = picData.name, VehicleId = vehicle.VehicleId });
+                    _unitOfWork.Complete();
+                }
+
+            }
+            return Created("Vehicle was edited", vehicle);
         }
 
         [Authorize(Roles = "Manager")]
         [HttpGet]
         [Route("deleteVehicle/{vehicleId}")]
-        public IHttpActionResult DeleteOffice(int vehicleId)
+        public IHttpActionResult DeleteVehicle(int vehicleId)
         {
             Vehicle vehicle = _unitOfWork.Vehicles.Get(vehicleId);
             if (vehicle == null)
@@ -365,10 +502,31 @@ namespace RentApp.Controllers
                 return NotFound();
             }
 
-            _unitOfWork.Vehicles.Remove(vehicle);
-            _unitOfWork.Complete();
+            try
+            {
+                IEnumerable<VehiclePicture> pictures = _unitOfWork.VehiclePictures.Find(x=>x.VehicleId==vehicleId);
+                foreach (VehiclePicture picture in pictures)
+                {
+                    if (File.Exists(HttpRuntime.AppDomainAppPath + "Images\\" + picture.Data))
+                    {
+                        File.Delete(HttpRuntime.AppDomainAppPath + "Images\\" + picture.Data);
+                    }
+                    _unitOfWork.VehiclePictures.Remove(picture);
+                }
 
-            return Ok();
+                _unitOfWork.Vehicles.Remove(vehicle);
+                _unitOfWork.Complete();
+            }
+            catch
+            {
+                return BadRequest("Vehicle could not be deleted");
+            }
+            return Ok("Vehicle was deleted");
         }
     }
+}
+public class PicData
+{
+    public int position { get; set; }
+    public string name { get; set; }
 }

@@ -357,6 +357,7 @@
     <Compile Include="Crypting\AES_Symm_Algorithm.cs" />
     <Compile Include="Crypting\Formatter.cs" />
     <Compile Include="Crypting\SecretKey.cs" />
+    <Compile Include="ETag\ETagHelper.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>

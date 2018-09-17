@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using RentApp.ETag;
 using RentApp.Models.Entities;
 using RentApp.Persistance.UnitOfWork;
 using System;
@@ -9,9 +10,11 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text;
 using System.Web;
 using System.Web.Http;
 using System.Web.Http.Description;
+using System.Web.Http.Results;
 
 namespace RentApp.Controllers
 {
@@ -34,25 +37,21 @@ namespace RentApp.Controllers
         {
             var source = _unitOfWork.Offices.GetAll(pageIndex,  pageSize,  serviceID);
 
+            if (source == null || source.Count() < 1)
+            {
+                return BadRequest("There are no Offices");
+            }
 
 
             // Get's No of Rows Count   
             int count = source.Count();
 
-            // Parameter is passed from Query string if it is null then it default Value will be pageNumber:1  
-            // int CurrentPage = pagingparametermodel.pageNumber;
-
-            // Parameter is passed from Query string if it is null then it default Value will be pageSize:20  
-            // int PageSize = pagingparametermodel.pageSize;
 
             // Display TotalCount to Records to User  
             int TotalCount = count;
 
             // Calculating Totalpage by Dividing (No of Records / Pagesize)  
             int TotalPages = (int)Math.Ceiling(count / (double)pageSize);
-
-            // Returns List of Customer after applying Paging   
-            //var items = source.Skip((pageIndex - 1) * pageSize).Take(pageSize).ToList();
 
 
             // Object which we are going to send in header   
@@ -77,28 +76,26 @@ namespace RentApp.Controllers
         [Route("getOffices/{serviceID}")]
         public IHttpActionResult GetAllServiceOffices(int serviceID)
         {
-            
             List<Office> offices;
             try
             {
                 offices = _unitOfWork.Offices.Find(x => x.RentServiceId == serviceID).ToList();
             }
-            catch (DbUpdateConcurrencyException)
-            {
-                return BadRequest("Cannot find offices.");
-            }
-            if (offices == null)
+            catch
             {
                 return NotFound();
             }
+            if (offices == null || offices.Count<1)
+            {
+                return BadRequest("There are no Offices");
+            }
 
             return Ok(offices);
-
         }
 
         [HttpGet]
         [Route("getOffice/{officeID}")]
-        public IHttpActionResult GetServiceOffice( int officeID)
+        public IHttpActionResult GetServiceOffice( int officeID)////ne koristi se?
         {
             
 
@@ -107,14 +104,22 @@ namespace RentApp.Controllers
             {
                 office = _unitOfWork.Offices.Find(x => x.OfficeId == officeID).FirstOrDefault();
             }
-            catch (DbUpdateConcurrencyException)
-            {
-                return BadRequest("Cannot find office.");
-            }
-            if (office == null)
+            catch 
             {
                 return NotFound();
             }
+            if (office == null)
+            {
+                return BadRequest("Office does not exist");
+            }
+
+            var eTag = ETagHelper.GetETag(Encoding.UTF8.GetBytes(office.ToString()));
+            HttpContext.Current.Response.Headers.Add("Access-Control-Expose-Headers", ETagHelper.ETAG_HEADER);
+            HttpContext.Current.Response.Headers.Add(ETagHelper.ETAG_HEADER, JsonConvert.SerializeObject(eTag));
+            // HttpContext.Current.Response.Headers.Add(ETAG_HEADER, eTag);
+
+            if (HttpContext.Current.Request.Headers.Get(ETagHelper.MATCH_HEADER) != null && HttpContext.Current.Request.Headers[ETagHelper.MATCH_HEADER].Trim('"') == eTag)
+                return new StatusCodeResult(HttpStatusCode.NotModified, new HttpRequestMessage());
 
             return Ok(office);
         }
@@ -179,11 +184,84 @@ namespace RentApp.Controllers
             office.Picture = imageName;
 
 
-
-            _unitOfWork.Offices.Add(office);
-            _unitOfWork.Complete();
-
+            try
+            {
+                _unitOfWork.Offices.Add(office);
+                _unitOfWork.Complete();
+            }
+            catch
+            {
+                return BadRequest("Office could not be added");
+            }
             return Created("Office was created", office);
+        }
+
+        [Authorize(Roles = "Manager")]
+        [HttpPost]
+        [Route("editOffice")]
+        [ResponseType(typeof(Office))]
+        public IHttpActionResult EditOffice()
+        {
+            var httpRequest = HttpContext.Current.Request;
+
+            int officeId = Int32.Parse(httpRequest["OfficeId"]);
+            Office office  = _unitOfWork.Offices.Get(officeId);
+
+            if (office == null)
+            {
+                return BadRequest("Office does not exist");
+            }
+
+
+            var eTag = ETagHelper.GetETag(Encoding.UTF8.GetBytes(office.ToString()));
+            HttpContext.Current.Response.Headers.Add("Access-Control-Expose-Headers", ETagHelper.ETAG_HEADER);
+            HttpContext.Current.Response.Headers.Add(ETagHelper.ETAG_HEADER, JsonConvert.SerializeObject(eTag));
+            //HttpContext.Current.Response.Headers.Add(ETAG_HEADER, eTag);
+
+            if (HttpContext.Current.Request.Headers.Get(ETagHelper.MATCH_HEADER) == null || HttpContext.Current.Request.Headers[ETagHelper.MATCH_HEADER].Trim('"') != eTag)
+            {
+                return new StatusCodeResult(HttpStatusCode.PreconditionFailed, new HttpRequestMessage());
+
+            }
+
+            string imageName = null;
+
+            office.Address = httpRequest["Address"];
+
+            var numberFormat = (System.Globalization.NumberFormatInfo)System.Globalization.CultureInfo.InstalledUICulture.NumberFormat.Clone();
+
+            numberFormat.NumberDecimalSeparator = ".";
+
+            office.Latitude = double.Parse(httpRequest["Latitude"], numberFormat);
+            office.Longitude = double.Parse(httpRequest["Longitude"], numberFormat);
+            //office.RentServiceId = Convert.ToInt32(httpRequest["RentServiceId"]);
+
+            try
+            {
+                _unitOfWork.Offices.Update(office);
+                _unitOfWork.Complete();
+            }
+            catch
+            {
+                return BadRequest("Office could not be editer");
+            }
+
+
+            var postedFile = httpRequest.Files["Picture"];
+            imageName = new string(Path.GetFileNameWithoutExtension(postedFile.FileName).Take(10).ToArray()).Replace(" ", "-");
+
+            if (office.Picture!= imageName && File.Exists(HttpRuntime.AppDomainAppPath + "Images\\" + office.Picture))
+            {
+                File.Delete(HttpRuntime.AppDomainAppPath + "Images\\" + office.Picture);
+
+                imageName = imageName + DateTime.Now.ToString("yymmssfff") + Path.GetExtension(postedFile.FileName);
+                var filePath = HttpContext.Current.Server.MapPath("~/Images/" + imageName);
+                postedFile.SaveAs(filePath);
+                office.Picture = imageName;
+            }
+
+            
+            return Created("Office was edited", office);
         }
 
         [Authorize(Roles = "Manager")]
@@ -196,11 +274,23 @@ namespace RentApp.Controllers
             {
                 return NotFound();
             }
+            try
+            {
+                if (File.Exists(HttpRuntime.AppDomainAppPath + "Images\\" + office.Picture))
+                {
+                    File.Delete(HttpRuntime.AppDomainAppPath + "Images\\" + office.Picture);
+                }
 
-            _unitOfWork.Offices.Remove(office);
-            _unitOfWork.Complete();
+                _unitOfWork.Offices.Remove(office);
+                _unitOfWork.Complete();
+            }
+            catch
+            {
+                return BadRequest("Office could not be deleted");
+            }
+           
 
-            return Ok();
+            return Ok("Office was deleted");
         }
     }
 }

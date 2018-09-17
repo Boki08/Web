@@ -16,12 +16,12 @@ namespace RentApp.Crypting
 		/// <param name="inFile"> filepath where plaintext is stored </param>
 		/// <param name="outFile"> filepath where cipher text is expected to be stored </param>
 		/// <param name="secretKey"> symmetric encryption key </param>
-		public static void EncryptFile(string inFile, string outFile, string secretKey)
+		public static void EncryptFile(byte[] inFile, string outFile, string secretKey)
 		{
 			byte[] header = null;	//image header (54 byte) should not be encrypted
 			byte[] body = null;     //image body to be encrypted
 
-            Formatter.Decompose(File.ReadAllBytes(inFile),out header, out body);
+            Formatter.Decompose(inFile, out header, out body);
 
             //DESCryptoServiceProvider DEScsp = new DESCryptoServiceProvider();
             AesCryptoServiceProvider AEScsp = new AesCryptoServiceProvider();
@@ -55,7 +55,7 @@ namespace RentApp.Crypting
 		/// <param name="inFile"> filepath where cipher text is stored </param>
 		/// <param name="outFile"> filepath where plain text is expected to be stored </param>
 		/// <param name="secretKey"> symmetric encryption key </param>
-		public static void DecryptFile(string inFile, string outFile, string secretKey)
+		public static void DecryptFile(string inFile, out byte[] outFile, string secretKey)
 		{
 			byte[] header = null;		//image header (54 byte) should not be decrypted
 			byte[] body = null;			//image body to be decrypted
@@ -96,7 +96,7 @@ namespace RentApp.Crypting
             byte[] decrypted = mStream.ToArray();
 
             //	public static void Compose(byte[] header, byte[] body, int outputLenght, string outFile)
-            Formatter.Compose(header, decrypted, header.Length + decrypted.Length, outFile);
+            Formatter.ComposeBytes(header, decrypted, header.Length + decrypted.Length, out outFile);
         }
 	}
 }

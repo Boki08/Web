@@ -41,7 +41,7 @@ namespace RentApp.Controllers
         [HttpGet]
         [Route("getMyOrders/{id}")]
         [ResponseType(typeof(Order))]
-        public IHttpActionResult GetMyOrders(int id)
+        public IHttpActionResult GetMyOrders(int id)//ne koristi se?
         {
             IEnumerable<Order> myOrders = unitOfWork.Orders.Find(o => o.UserId == id);
             if (myOrders == null)
@@ -61,7 +61,7 @@ namespace RentApp.Controllers
 
             if(order.DepartureDate<DateTime.Now || order.ReturnDate<order.DepartureDate || order.ReturnDate < DateTime.Now)
             {
-                return BadRequest("You can't add order with these dates!");
+                return BadRequest("You can't add Order with these dates!");
             }
 
             Vehicle vehicle= unitOfWork.Vehicles.Find(v=>v.VehicleId==order.VehicleId).FirstOrDefault();
@@ -117,7 +117,7 @@ namespace RentApp.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                return BadRequest("Cannot add new order.");
+                return BadRequest("Cannot add new Order.");
             }
             return Created("Order was created",order);
         }
@@ -139,11 +139,15 @@ namespace RentApp.Controllers
             }
             catch
             {
-                return BadRequest();
+                return BadRequest("User not found. Try to relog");
             }
             //var source = _unitOfWork.Vehicles.Find(x => x.RentServiceId == serviceID);
             var source = unitOfWork.Orders.GetAllUserOrders(pageIndex, pageSize, userId).ToList();
 
+            if(source==null || source.Count < 1)
+            {
+                return BadRequest("There are no Orders");
+            }
             //foreach (Order order in source)
             //{
             //    order.DepartureOffice = unitOfWork.Offices.Find(x=>x.OfficeId==order.DepartureOfficeId).FirstOrDefault();
@@ -211,7 +215,7 @@ namespace RentApp.Controllers
             }
             catch
             {
-                return BadRequest();
+                return BadRequest("User not found. Try to relog");
             }
             Order order = unitOfWork.Orders.Find(x=>x.OrderId==orderId).FirstOrDefault();
 
@@ -231,12 +235,12 @@ namespace RentApp.Controllers
                 }
                 catch
                 {
-                    return BadRequest("Can't return the vehicle.");
+                    return BadRequest("Can't return the Vehicle.");
                 }
 
                 return Ok(vehicle);
             }
-            return BadRequest("Can't return the vehicle.");
+            return BadRequest("Can't return the Vehicle.");
         }
     }
 }

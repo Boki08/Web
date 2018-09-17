@@ -57,5 +57,29 @@ namespace RentApp.Crypting
 			Writer.Flush();
 			Writer.Close();
 		}
-	}
+
+        public static void ComposeBytes(byte[] header, byte[] body, int outputLenght, out byte[] outFile)
+        {
+            byte[] output = new byte[outputLenght];
+
+            for (int i = 0; i < outputLenght; i++)
+            {
+                if (i < headerLenght)
+                {
+                    output[i] = header[i];
+                }
+                else
+                {
+                    output[i] = body[i - headerLenght];
+                }
+            }
+
+            outFile = output;
+
+            //BinaryWriter Writer = new BinaryWriter(File.OpenWrite(outFile));
+            //Writer.Write(output);		// Writer raw data    
+            //Writer.Flush();
+            //Writer.Close();
+        }
+    }
 }
