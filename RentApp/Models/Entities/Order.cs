@@ -37,7 +37,7 @@ namespace RentApp.Models.Entities
 
         
         public virtual Vehicle Vehicle { get; set; }
-        [JsonIgnore]
+ 
         public virtual AppUser User { get; set; }
         
         [JsonIgnore]

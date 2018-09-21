@@ -181,75 +181,75 @@ namespace RentApp.Migrations
 
            );
             //type
-            context.TypesOfVehicles.AddOrUpdate(
+           // context.TypesOfVehicles.AddOrUpdate(
 
-                p => p.TypeId,
+           //     p => p.TypeId,
 
-                new TypeOfVehicle() { Type = "type1" }
+           //     new TypeOfVehicle() { Type = "type1" }
 
-            ); context.TypesOfVehicles.AddOrUpdate(
+           // ); context.TypesOfVehicles.AddOrUpdate(
 
-                 p => p.TypeId,
+           //      p => p.TypeId,
 
-                 new TypeOfVehicle(){ Type = "type1" }
+           //      new TypeOfVehicle(){ Type = "type1" }
 
-             ); context.TypesOfVehicles.AddOrUpdate(
+           //  ); context.TypesOfVehicles.AddOrUpdate(
 
-                 p => p.TypeId,
+           //      p => p.TypeId,
 
-                 new TypeOfVehicle() { Type = "type1" }
+           //      new TypeOfVehicle() { Type = "type1" }
 
-             );
-            context.Vehicles.AddOrUpdate(
+           //  );
+           // context.Vehicles.AddOrUpdate(
 
-                p => p.VehicleId,
+           //     p => p.VehicleId,
 
-                new Vehicle()
-                {
-                    Available = true,
-                    Manufacturer = "rent1@yahoo.com",
-                    Model = "Description of the description",
-                    Description = "jdfgdhfdhgf",
-                    Pictures = "1234",
-                    RentServiceId = 1,
-                    YearOfManufacturing = "2010",
-                    TypeId = 1,
-                }
+           //     new Vehicle()
+           //     {
+           //         Available = true,
+           //         Manufacturer = "rent1@yahoo.com",
+           //         Model = "Description of the description",
+           //         Description = "jdfgdhfdhgf",
+           //         Pictures = "1234",
+           //         RentServiceId = 1,
+           //         YearOfManufacturing = "2010",
+           //         TypeId = 1,
+           //     }
                 
 
-            );
-            context.Vehicles.AddOrUpdate(
+           // );
+           // context.Vehicles.AddOrUpdate(
 
-                p => p.VehicleId,
+           //     p => p.VehicleId,
 
-                new Vehicle()
-                {
-                    Available = true,
-                    Manufacturer = "rent1@yahoo.com",
-                    Model = "Description of the description2",
-                    Description = "jdfgdhfdhgf",
-                    Pictures = "1234",
-                    RentServiceId = 1,
-                    YearOfManufacturing = "2015",
-                    TypeId = 2,
-                }
-            );
-            context.Vehicles.AddOrUpdate(
+           //     new Vehicle()
+           //     {
+           //         Available = true,
+           //         Manufacturer = "rent1@yahoo.com",
+           //         Model = "Description of the description2",
+           //         Description = "jdfgdhfdhgf",
+           //         Pictures = "1234",
+           //         RentServiceId = 1,
+           //         YearOfManufacturing = "2015",
+           //         TypeId = 2,
+           //     }
+           // );
+           // context.Vehicles.AddOrUpdate(
 
-               p => p.VehicleId,
+           //    p => p.VehicleId,
 
-               new Vehicle()
-               {
-                   Available = false,
-                   Manufacturer = "rent1@yahoo.com",
-                   Model = "Description of the description3",
-                   Description = "jdfgdhfdhgf",
-                   Pictures = "1234",
-                   RentServiceId = 2,
-                   YearOfManufacturing = "2013",
-                  TypeId = 3,
-               }
-           );
+           //    new Vehicle()
+           //    {
+           //        Available = false,
+           //        Manufacturer = "rent1@yahoo.com",
+           //        Model = "Description of the description3",
+           //        Description = "jdfgdhfdhgf",
+           //        Pictures = "1234",
+           //        RentServiceId = 2,
+           //        YearOfManufacturing = "2013",
+           //       TypeId = 3,
+           //    }
+           //);
 
 
 

@@ -25,41 +25,15 @@ namespace RentApp.Controllers
             this.unitOfWork = unitOfWork;
         }
 
-        public IEnumerable<Order> GetOrders()
-        {
-            return unitOfWork.Orders.GetAll();
-        }
-
-        [HttpGet]
-        [Route("orders")]
-        public IEnumerable<Order> getOrders()
-        {
-            return unitOfWork.Orders.GetAll();
-        }
-
-        // GET: api/AppUser/5/
-        [HttpGet]
-        [Route("getMyOrders/{id}")]
-        [ResponseType(typeof(Order))]
-        public IHttpActionResult GetMyOrders(int id)//ne koristi se?
-        {
-            IEnumerable<Order> myOrders = unitOfWork.Orders.Find(o => o.UserId == id);
-            if (myOrders == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(myOrders);
-        }
-
+        [Authorize(Roles = "AppUser")]
         [HttpPost]
         [Route("postOrder")]
         [ResponseType(typeof(Order))]
-        public IHttpActionResult postOrder(Order order)
+        public IHttpActionResult PostOrder(Order order)
         {
 
 
-            if(order.DepartureDate<DateTime.Now || order.ReturnDate<order.DepartureDate || order.ReturnDate < DateTime.Now)
+            if(order.DepartureDate.Date<DateTime.Now.Date || order.ReturnDate<order.DepartureDate || order.ReturnDate < DateTime.Now)
             {
                 return BadRequest("You can't add Order with these dates!");
             }
@@ -71,21 +45,24 @@ namespace RentApp.Controllers
             }
 
             AppUser appUser;
-
-            RADBContext db = new RADBContext();
             try
             {
                 var username = User.Identity.Name;
 
-                var user = db.Users.Where(u => u.UserName == username).Include(a => a.AppUser).First();
-                appUser = user.AppUser;
-               
+
+                var user = unitOfWork.AppUsers.Find(u => u.Email == username).FirstOrDefault();
+                if (user == null)
+                {
+                    return BadRequest("Data could not be retrieved, try to relog.");
+                }
+                appUser = user;
+
             }
             catch
             {
                 return BadRequest("User not found, try to relog");
             }
-           // AppUser user = unitOfWork.AppUsers.Find(u => u.UserId == order.UserId).FirstOrDefault();
+
             if (appUser == null)
             {
                 return BadRequest("User not found, try to relog");
@@ -128,49 +105,38 @@ namespace RentApp.Controllers
         public IHttpActionResult GetAllUserOrders(int pageIndex, int pageSize)
         {
             int userId;
-            RADBContext db = new RADBContext();
+            AppUser appUser;
             try
             {
                 var username = User.Identity.Name;
 
-                var user = db.Users.Where(u => u.UserName == username).Include(a => a.AppUser).First();
-                userId = user.AppUser.UserId;
+                var user = unitOfWork.AppUsers.Find(u => u.Email == username).FirstOrDefault();
+                if (user == null)
+                {
+                    return BadRequest("Data could not be retrieved, try to relog.");
+                }
+                appUser = user;
+                userId = appUser.UserId;
 
             }
             catch
             {
                 return BadRequest("User not found. Try to relog");
             }
-            //var source = _unitOfWork.Vehicles.Find(x => x.RentServiceId == serviceID);
+
             var source = unitOfWork.Orders.GetAllUserOrders(pageIndex, pageSize, userId).ToList();
 
             if(source==null || source.Count < 1)
             {
                 return BadRequest("There are no Orders");
             }
-            //foreach (Order order in source)
-            //{
-            //    order.DepartureOffice = unitOfWork.Offices.Find(x=>x.OfficeId==order.DepartureOfficeId).FirstOrDefault();
-            //    order.ReturnOffice = unitOfWork.Offices.Find(x => x.OfficeId == order.ReturnOfficeId).FirstOrDefault();
-            //}
-            // Get's No of Rows Count   
-            //int count = source.Count();
-
-            // Parameter is passed from Query string if it is null then it default Value will be pageNumber:1  
-            // int CurrentPage = pagingparametermodel.pageNumber;
-
-            // Parameter is passed from Query string if it is null then it default Value will be pageSize:20  
-            // int PageSize = pagingparametermodel.pageSize;
+         
 
             // Display TotalCount to Records to User  
             int TotalCount = unitOfWork.Orders.CountAllUserOrders(userId);
 
             // Calculating Totalpage by Dividing (No of Records / Pagesize)  
             int TotalPages = (int)Math.Ceiling(TotalCount / (double)pageSize);
-
-            // Returns List of Customer after applying Paging   
-            //var items = source.ToList();
-
 
 
             // if CurrentPage is greater than 1 means it has previousPage  
@@ -186,8 +152,7 @@ namespace RentApp.Controllers
                 pageSize,
                 currentPage = pageIndex,
                 totalPages = TotalPages,
-                //previousPage,
-                //nextPage
+
             };
 
             // Setting Header  
@@ -204,13 +169,18 @@ namespace RentApp.Controllers
         public IHttpActionResult ReturnVehicle(int orderId)
         {
             int userId;
-            RADBContext db = new RADBContext();
+            AppUser appUser;
             try
             {
                 var username = User.Identity.Name;
 
-                var user = db.Users.Where(u => u.UserName == username).Include(a => a.AppUser).First();
-                userId = user.AppUser.UserId;
+                var user = unitOfWork.AppUsers.Find(u => u.Email == username).FirstOrDefault();
+                if (user == null)
+                {
+                    return BadRequest("Data could not be retrieved, try to relog.");
+                }
+                appUser = user;
+                userId = appUser.UserId;
 
             }
             catch
@@ -221,7 +191,7 @@ namespace RentApp.Controllers
 
             Vehicle vehicle = order.Vehicle;
 
-            if (vehicle.Available == false && order.UserId==userId && order.VehicleReturned==false)
+            if (vehicle.Available == false && order.UserId==userId && order.VehicleReturned==false && order.ReturnDate.Date <= DateTime.Now.Date)
             {
                 vehicle.Available = true;
                 unitOfWork.Vehicles.Update(vehicle);

@@ -18,12 +18,15 @@ using System.Web;
 using System.Web.Http;
 using System.Web.Http.Description;
 using System.Web.Http.Results;
+using System.Web.Script.Serialization;
 
 namespace RentApp.Controllers
 {
     [RoutePrefix("api/rentService")]
     public class RentServiceController : ApiController
     {
+
+        JsonSerializerSettings setting = new JsonSerializerSettings { ReferenceLoopHandling = ReferenceLoopHandling.Ignore };
         private readonly IUnitOfWork _unitOfWork;
 
         public RentServiceController(IUnitOfWork unitOfWork)
@@ -31,16 +34,11 @@ namespace RentApp.Controllers
             this._unitOfWork = unitOfWork;
         }
 
-        public IEnumerable<RentService> GetRentServices()
-        {
-            return _unitOfWork.RentServices.GetAll();
-        }
 
         [HttpGet]
         [Route("getRentService/{serviceId}")]
         public IHttpActionResult GetRentService(int serviceId)
         {
-            //var source = _unitOfWork.RentServices.Find(x => x.RentServiceId == serviceId);
 
             RentService service;
             try
@@ -56,10 +54,11 @@ namespace RentApp.Controllers
                 return BadRequest("Rent Service does not exist");
             }
 
-            var eTag = ETagHelper.GetETag(Encoding.UTF8.GetBytes(service.ToString()));
+            var jsonObj = JsonConvert.SerializeObject(service, Formatting.None, setting);
+            var eTag = ETagHelper.GetETag(Encoding.UTF8.GetBytes(jsonObj));
             HttpContext.Current.Response.Headers.Add("Access-Control-Expose-Headers", ETagHelper.ETAG_HEADER);
             HttpContext.Current.Response.Headers.Add(ETagHelper.ETAG_HEADER, JsonConvert.SerializeObject(eTag));
-            // HttpContext.Current.Response.Headers.Add(ETAG_HEADER, eTag);
+           
 
             if (HttpContext.Current.Request.Headers.Get(ETagHelper.MATCH_HEADER) != null && HttpContext.Current.Request.Headers[ETagHelper.MATCH_HEADER].Trim('"') == eTag)
                 return new StatusCodeResult(HttpStatusCode.NotModified, new HttpRequestMessage());
@@ -72,7 +71,7 @@ namespace RentApp.Controllers
         [Route("getAll/{pageIndex}/{pageSize}/{sortType}")]
         public IHttpActionResult getRentServices(int pageIndex, int pageSize, int sortType)
         {
-            //var source = _unitOfWork.RentServices.GetAll();
+         
             var items = _unitOfWork.RentServices.GetAllServicesWithSorting(pageIndex, pageSize, sortType).ToList();
 
             if(items==null || items.Count < 1)
@@ -114,20 +113,27 @@ namespace RentApp.Controllers
         {
 
             AppUser appUser;
-
-            RADBContext db = new RADBContext();
             try
             {
                 var username = User.Identity.Name;
 
-                var user = db.Users.Where(u => u.UserName == username).Include(a => a.AppUser).First();
-                appUser = user.AppUser;
+                var user = _unitOfWork.AppUsers.Find(u => u.Email == username).FirstOrDefault();
+                if (user == null)
+                {
+                    return BadRequest("Data could not be retrieved, try to relog.");
+                }
+                appUser = user;
 
             }
             catch
             {
                 return BadRequest("User not found, try to relog");
-                // return Request.CreateResponse(HttpStatusCode.BadRequest);
+              
+            }
+
+            if (appUser == null)
+            {
+                return BadRequest("Try to relog");
             }
 
             if (appUser.Activated == false)
@@ -142,9 +148,9 @@ namespace RentApp.Controllers
 
 
             RentService service = new RentService();
-            service.Name = httpRequest["Name"];
-            service.Description = httpRequest["Description"];
-            service.Email = httpRequest["Email"];
+            service.Name = httpRequest["Name"].Trim();
+            service.Description = httpRequest["Description"].Trim();
+            service.Email = httpRequest["Email"].Trim();
             service.Activated = false;
             service.ServiceEdited = true;
 
@@ -194,13 +200,15 @@ namespace RentApp.Controllers
             }
 
 
-            var eTag = ETagHelper.GetETag(Encoding.UTF8.GetBytes(service.ToString()));
-            HttpContext.Current.Response.Headers.Add("Access-Control-Expose-Headers", ETagHelper.ETAG_HEADER);
-            HttpContext.Current.Response.Headers.Add(ETagHelper.ETAG_HEADER, JsonConvert.SerializeObject(eTag));
-            //HttpContext.Current.Response.Headers.Add(ETAG_HEADER, eTag);
+            var jsonObj = JsonConvert.SerializeObject(service, Formatting.None, setting);
+            var eTag = ETagHelper.GetETag(Encoding.UTF8.GetBytes(jsonObj));
+
+          
 
             if (HttpContext.Current.Request.Headers.Get(ETagHelper.MATCH_HEADER) == null || HttpContext.Current.Request.Headers[ETagHelper.MATCH_HEADER].Trim('"') != eTag)
             {
+                HttpContext.Current.Response.Headers.Add("Access-Control-Expose-Headers", ETagHelper.ETAG_HEADER);
+                HttpContext.Current.Response.Headers.Add(ETagHelper.ETAG_HEADER, JsonConvert.SerializeObject(eTag));
                 return new StatusCodeResult(HttpStatusCode.PreconditionFailed, new HttpRequestMessage());
 
             }
@@ -210,22 +218,29 @@ namespace RentApp.Controllers
 
 
 
-            //RentService service = new RentService();
-            service.Name = httpRequest["Name"];
-            service.Description = httpRequest["Description"];
-            service.Email = httpRequest["Email"];
+         
+            service.Name = httpRequest["Name"].Trim();
+            service.Description = httpRequest["Description"].Trim();
+            service.Email = httpRequest["Email"].Trim();
             service.Activated = false;
             service.ServiceEdited = true;
 
 
 
             var postedFile = httpRequest.Files["Logo"];
-            imageName = new string(Path.GetFileNameWithoutExtension(postedFile.FileName).Take(10).ToArray()).Replace(" ", "-");
-            imageName = imageName + DateTime.Now.ToString("yymmssfff") + Path.GetExtension(postedFile.FileName);
-            var filePath = HttpContext.Current.Server.MapPath("~/Images/" + imageName);
-            postedFile.SaveAs(filePath);
-            service.Logo = imageName;
+            if (postedFile != null)
+            {
+                if (File.Exists(HttpRuntime.AppDomainAppPath + "Images\\" + service.Logo))
+                {
+                    File.Delete(HttpRuntime.AppDomainAppPath + "Images\\" + service.Logo);
+                }
 
+                imageName = new string(Path.GetFileNameWithoutExtension(postedFile.FileName).Take(10).ToArray()).Replace(" ", "-");
+                imageName = imageName + DateTime.Now.ToString("yymmssfff") + Path.GetExtension(postedFile.FileName);
+                var filePath = HttpContext.Current.Server.MapPath("~/Images/" + imageName);
+                postedFile.SaveAs(filePath);
+                service.Logo = imageName;
+            }
 
             try
             {
@@ -238,9 +253,15 @@ namespace RentApp.Controllers
             }
             NotificationsHub.NotifyAdmin("New Rent Service was edited");
 
+             jsonObj = JsonConvert.SerializeObject(service, Formatting.None, setting);
+             eTag = ETagHelper.GetETag(Encoding.UTF8.GetBytes(jsonObj));
+            HttpContext.Current.Response.Headers.Add("Access-Control-Expose-Headers", ETagHelper.ETAG_HEADER);
+            HttpContext.Current.Response.Headers.Add(ETagHelper.ETAG_HEADER, JsonConvert.SerializeObject(eTag));
+
             return Created("Rent Service was edited", service);
         }
 
+        [Authorize(Roles = "Manager")]
         [HttpGet]
         [Route("getAllRentServicesManager/{pageIndex}/{pageSize}/{isApproved}/{noOffices}/{noVehicles}")]
         public IHttpActionResult getAllRentServicesManager(int pageIndex, int pageSize, bool isApproved, bool noOffices, bool noVehicles)
@@ -304,7 +325,7 @@ namespace RentApp.Controllers
             return Ok(items);
         }
 
-
+        [Authorize(Roles = "Admin")]
         [HttpGet]
         [Route("getAllRentServicesAdmin/{pageIndex}/{pageSize}/{approved}/{notApproved}/{edited}/{notEdited}/{sort}")]
         public IHttpActionResult getAllRentServicesAdmin(int pageIndex, int pageSize, bool approved, bool notApproved, bool edited, bool notEdited, string sort)
@@ -321,12 +342,12 @@ namespace RentApp.Controllers
             if (edited)
             {
                 source = source.Union(_unitOfWork.RentServices.Find(x => x.ServiceEdited == true), new RentServiceComparer());
-                //source = _unitOfWork.RentServices.Find(x => x.ServiceEdited == true ).ToList();
+               
             }
             if (notEdited)
             {
                 source = source.Union(_unitOfWork.RentServices.Find(x => x.ServiceEdited == false), new RentServiceComparer());
-                // source = _unitOfWork.RentServices.Find(x => x.ServiceEdited == false ).ToList();
+               
             }
 
             if (!approved && !notApproved && !edited && !notEdited)
@@ -361,11 +382,6 @@ namespace RentApp.Controllers
             // Get's No of Rows Count   
             int count = source.Count();
 
-            // Parameter is passed from Query string if it is null then it default Value will be pageNumber:1  
-            // int CurrentPage = pagingparametermodel.pageNumber;
-
-            // Parameter is passed from Query string if it is null then it default Value will be pageSize:20  
-            //int PageSize = pagingparametermodel.pageSize;
 
             // Display TotalCount to Records to User  
             int TotalCount = count;
@@ -441,9 +457,9 @@ namespace RentApp.Controllers
             try
             {
 
-                if (File.Exists("~/Images/" + rentService.Logo))
+                if (File.Exists(HttpRuntime.AppDomainAppPath + "Images\\" + rentService.Logo))
                 {
-                    File.Delete("~/Images/" + rentService.Logo);
+                    File.Delete(HttpRuntime.AppDomainAppPath + "Images\\" + rentService.Logo);
                 }
 
                 _unitOfWork.RentServices.Remove(rentService);
@@ -455,6 +471,7 @@ namespace RentApp.Controllers
             }
             return Ok();
         }
+
         [Authorize(Roles = "Admin")]
         [HttpGet]
         [Route("activateRentService/{serviceId}/{activated}")]
@@ -464,6 +481,18 @@ namespace RentApp.Controllers
             if (rentService == null)
             {
                 return NotFound();
+            }
+
+            var jsonObj = JsonConvert.SerializeObject(rentService, Formatting.None, setting);
+            var eTag = ETagHelper.GetETag(Encoding.UTF8.GetBytes(jsonObj));
+
+
+            if (HttpContext.Current.Request.Headers.Get(ETagHelper.MATCH_HEADER) == null || HttpContext.Current.Request.Headers[ETagHelper.MATCH_HEADER].Trim('"') != eTag)
+            {
+                HttpContext.Current.Response.Headers.Add("Access-Control-Expose-Headers", ETagHelper.ETAG_HEADER);
+                HttpContext.Current.Response.Headers.Add(ETagHelper.ETAG_HEADER, JsonConvert.SerializeObject(eTag));
+                return new StatusCodeResult(HttpStatusCode.PreconditionFailed, new HttpRequestMessage());
+
             }
 
             rentService.Activated = activated;
@@ -479,6 +508,11 @@ namespace RentApp.Controllers
             {
                 return BadRequest("Rent Service cound not be activated");
             }
+
+             jsonObj = JsonConvert.SerializeObject(rentService, Formatting.None, setting);
+             eTag = ETagHelper.GetETag(Encoding.UTF8.GetBytes(jsonObj));
+            HttpContext.Current.Response.Headers.Add("Access-Control-Expose-Headers", ETagHelper.ETAG_HEADER);
+            HttpContext.Current.Response.Headers.Add(ETagHelper.ETAG_HEADER, JsonConvert.SerializeObject(eTag));
             return Ok(string.Format("Rent Service was {0}",activated==true?"activated":"deactivated"));
         }
     }

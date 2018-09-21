@@ -25,41 +25,14 @@ namespace RentApp.Controllers
             this.unitOfWork = unitOfWork;
         }
 
-        public IEnumerable<Comment> GetComments()//?????
-        {
-            return unitOfWork.Comments.GetAll();
-        }
 
-
-        [HttpGet]
-        [Route("comments")]
-        public IEnumerable<Comment> getComments()
-        {
-            return unitOfWork.Comments.GetAll();
-        }
-
-        // GET: api/Comments/5/3
-        //[HttpGet]
-        //[Route("getComments/{orderId}")]
-        //[ResponseType(typeof(Comment))]
-        //public IHttpActionResult GetComment(int id1)
-        //{
-        //    Comment comment = unitOfWork.Comments.Find(cm => cm.OrderId == id1).FirstOrDefault();
-        //    if (comment == null)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    return Ok(comment);
-        //}
-
-
+        [Authorize(Roles = "AppUser")]
         [HttpGet]
         [Route("getComment/{orderId}/{userId}")]
         [ResponseType(typeof(Comment))]
         public IHttpActionResult GetUserComment(int orderId, int userId)
         {
-            Comment comment = unitOfWork.Comments.Find(x => x.OrderId == orderId && x.UserId == userId).FirstOrDefault();
+            Comment comment = unitOfWork.Comments.Find(x => x.OrderId == orderId).FirstOrDefault();
             if (comment == null)
             {
                 return NotFound();
@@ -68,12 +41,13 @@ namespace RentApp.Controllers
             return Ok(comment);
         }
 
+        [Authorize(Roles = "AppUser")]
         [HttpGet]
         [Route("getCanUserComment/{orderId}/{userId}")]
         [ResponseType(typeof(string))]
         public IHttpActionResult GetCanUserComment(int orderId, int userId)
         {
-            Comment comment = unitOfWork.Comments.Find(x => x.OrderId == orderId && x.UserId == userId).FirstOrDefault();
+            Comment comment = unitOfWork.Comments.Find(x => x.OrderId == orderId).FirstOrDefault();
 
             if (comment == null)
             {
@@ -91,40 +65,34 @@ namespace RentApp.Controllers
             return Ok("commentExists");
         }
 
+        [Authorize(Roles = "AppUser")]
         [HttpPost]
         [Route("postComment")]
         [ResponseType(typeof(Comment))]
         public IHttpActionResult PostComment(Comment comment)
         {
-            //RentService service = unitOfWork.RentServices.GetServiceWithVehicles(1);
 
-
-            ////List<Order> orders = unitOfWork.Orders.GetServiceOrders(service.RentServiceId).ToList();
-            //List<Order> orders = new List<Order>();
-            //foreach (Vehicle vehicle in service.Vehicles)
-            //{
-            //    orders.AddRange(vehicle.Orders);
-            //}
-
-
-            RADBContext db = new RADBContext();
             int userId;
-            try
-            {
-                var user = db.Users.FirstOrDefault(u => u.UserName == User.Identity.Name);
+                AppUser appUser;
+                try
+                {
+                    var username = User.Identity.Name;
 
-                userId = user.AppUserId;
+                    var user = unitOfWork.AppUsers.Find(u => u.Email == username).FirstOrDefault();
+                if (user == null)
+                {
+                    return BadRequest("Data could not be retrieved, try to relog.");
+                }
+                appUser = user;
+
+                    userId = appUser.UserId;
             }
             catch
             {
                 return BadRequest("User not found, try to relog");
             }
 
-
-            //var user = db.Users.FirstOrDefault(u => u.UserName == User.Identity.Name);
-
-            //int userId =  user.AppUserId;
-            comment.UserId = userId;
+            
             comment.PostedDate = DateTime.Now;
 
             Order order = unitOfWork.Orders.GetWithVehicles(comment.OrderId);
@@ -134,19 +102,8 @@ namespace RentApp.Controllers
                 return BadRequest("Can't comment before the return date");
             }
 
-            
-            //RentService service = unitOfWork.RentServices.Find(x=>x.RentServiceId == order.Vehicle.RentServiceId).ToList().FirstOrDefault();
-            // RentService service1 = unitOfWork.RentServices.GetServiceWithVehicles(order.Vehicle.RentServiceId);
+
             RentService service = unitOfWork.RentServices.GetServiceWithComments(order.Vehicle.RentServiceId);
-
-
-            //List<Order> orders = unitOfWork.Orders.GetServiceOrders(service.RentServiceId).ToList();
-            //List<Order> orders=new List<Order>();
-            //foreach (Vehicle vehicle in service.Vehicles)
-            //{
-            //    orders.AddRange(vehicle.Orders);
-            //}
-            //orders=service.Vehicles
 
             int numOfComments = service.Comments.Count;
             double sumGrades = 0;
@@ -163,19 +120,10 @@ namespace RentApp.Controllers
 
             service.Grade = sumGrades / (numOfComments+1);
 
-            service.Comments.Add(comment);//?????????????????
+            comment.Review = comment.Review.Trim();
 
+            service.Comments.Add(comment);
 
-
-            //unitOfWork.Comments.Add(comment);??????????????????????????????????
-            //try
-            //{
-            //    unitOfWork.Complete();
-            //}
-            //catch
-            //{
-            //    return BadRequest("Can't add comment.");
-            //}
 
             unitOfWork.RentServices.Update(service);
             try

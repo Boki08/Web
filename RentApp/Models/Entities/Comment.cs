@@ -12,8 +12,8 @@ namespace RentApp.Models.Entities
     {
         [Key]
         public int CommentId { get; set; }
-        [ForeignKey("User")]
-        public int UserId { get; set; }
+        //[ForeignKey("User")]
+        //public int UserId { get; set; }
         //[ForeignKey("RentService")]
         //public int RentServiceId { get; set; }
         [ForeignKey("Order")]
@@ -26,7 +26,7 @@ namespace RentApp.Models.Entities
         [Required]
         public int Grade { get; set; }
        // [JsonIgnore]
-        public virtual AppUser User { get; set; }
+       //public virtual AppUser User { get; set; }
         //[JsonIgnore]
         public virtual Order Order { get; set; }
         //[JsonIgnore]

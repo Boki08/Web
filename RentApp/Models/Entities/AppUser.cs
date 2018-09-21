@@ -21,7 +21,7 @@ namespace RentApp.Models.Entities
         [Required]
         public bool ProfileEdited { get; set; }
         public string DocumentPicture { get; set; }
-        public virtual List<Comment> Comments { get; set; }
+        //public virtual List<Comment> Comments { get; set; }
         public virtual List<Order> Orders { get; set; }
     }
 }

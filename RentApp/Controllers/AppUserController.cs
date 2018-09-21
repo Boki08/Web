@@ -19,26 +19,26 @@ using System.Web;
 using System.Web.Http;
 using System.Web.Http.Description;
 using System.Web.Http.Results;
+using System.Web.Script.Serialization;
 
 namespace RentApp.Controllers
 {
     [RoutePrefix("api/appUser")]
     public class AppUserController : ApiController
     {
+
+        JsonSerializerSettings setting = new JsonSerializerSettings { ReferenceLoopHandling = ReferenceLoopHandling.Ignore };
         private readonly IUnitOfWork _unitOfWork;
-        //readonly IUnitOfWork unitOfWork = new DemoUnitOfWork(new RADBContext());
+
 
         public AppUserController(IUnitOfWork unitOfWork)
         {
-        
+
             this._unitOfWork = unitOfWork;
         }
 
 
-        /* public IEnumerable<AppUser> GetComments()
-         {
-             return _unitOfWork.AppUsers.GetAll();
-         }*/
+       
 
         [Authorize(Roles = "Admin")]
         [HttpGet]
@@ -64,30 +64,17 @@ namespace RentApp.Controllers
                 }
             }
 
-            if (type == "AppUser")
+            
+            if (editedFirst)
             {
-                if (editedFirst)
-                {
-                    source.OrderBy(x => x.ProfileEdited == true);
+                source = source.OrderByDescending(x => x.ProfileEdited).ToList();
 
-                }
-                else if (approvedFirst)
-                {
-                    source.OrderBy(x => x.Activated == true);
-                }
             }
-            else
+            else if (approvedFirst)
             {
-                if (editedFirst)
-                {
-                    source.OrderBy(x => x.Activated == true);
-
-                }
-                else if (approvedFirst)
-                {
-                    source.OrderBy(x => x.Activated == false);
-                }
+                source = source.OrderByDescending(x => x.Activated).ToList();
             }
+            
 
             // Get's No of Rows Count   
             int count = source.Count();
@@ -115,7 +102,7 @@ namespace RentApp.Controllers
             // Setting Header  
             HttpContext.Current.Response.Headers.Add("Access-Control-Expose-Headers", "Paging-Headers");
             HttpContext.Current.Response.Headers.Add("Paging-Headers", JsonConvert.SerializeObject(paginationMetadata));
-            // Returing List of Customers Collections  
+
             return Ok(items);
         }
 
@@ -126,24 +113,23 @@ namespace RentApp.Controllers
         {
             if (path == null)
             {
-                path = "default-placeholder.png";
+                path = "default-placeholderCrypt.png";
             }
 
             var filePath = HttpContext.Current.Server.MapPath("~/Images/" + path);
             if (!File.Exists(filePath))
             {
-                path = "default-placeholder.png";
+                path = "default-placeholderCrypt.png";
                 filePath = HttpContext.Current.Server.MapPath("~/Images/" + path);
             }
             var ext = Path.GetExtension(filePath);
 
 
-            byte[] contents=null;
+            byte[] contents = null;
 
             string eSecretKey = SecretKey.LoadKey(HttpRuntime.AppDomainAppPath + "Images\\SecretKey.txt");
             AES_Symm_Algorithm.DecryptFile(filePath, out contents, eSecretKey);
 
-            //var contents = File.ReadAllBytes(filePath);
 
             MemoryStream ms = new MemoryStream(contents);
 
@@ -153,47 +139,30 @@ namespace RentApp.Controllers
 
             return response;
         }
-        //// GET: api/AppUser/5/
-        //[HttpGet]/////////skoro zakomentarisano
-        //[Route("getUser/{id}")]
-        //[ResponseType(typeof(AppUser))]
-        //public IHttpActionResult GetAppIdUser(int id)
-        //{
-        //    AppUser user;
-        //    try
-        //    {
-        //        user = _unitOfWork.AppUsers.Find(u => u.UserId == id).FirstOrDefault();
-        //    }
-        //    catch 
-        //    {
-        //        return BadRequest("User does not exist");
-        //    }
-        //    if (user == null)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    return Ok(user);
-        //}
+        
 
         [HttpGet]
         [Route("getCurrentUser")]
         [ResponseType(typeof(AppUser))]
         public IHttpActionResult GetAppUser()
         {
-            RADBContext db = new RADBContext();
+            AppUser appUser;
             try
             {
                 var username = User.Identity.Name;
-               
-                var user = db.Users.Where(u => u.UserName == username).Include(a => a.AppUser).First();
-                var appUser = user.AppUser;
 
+                var user = _unitOfWork.AppUsers.Find(u => u.Email == username).FirstOrDefault();
+                if (user == null)
+                {
+                    return BadRequest("Data could not be retrieved, try to relog.");
+                }
+                appUser = user;
 
-                var eTag = ETagHelper.GetETag(Encoding.UTF8.GetBytes(appUser.ToString()));
+                var jsonObj = JsonConvert.SerializeObject(appUser, Formatting.None, setting);
+                var eTag = ETagHelper.GetETag(Encoding.UTF8.GetBytes(jsonObj));
+
                 HttpContext.Current.Response.Headers.Add("Access-Control-Expose-Headers", ETagHelper.ETAG_HEADER);
                 HttpContext.Current.Response.Headers.Add(ETagHelper.ETAG_HEADER, JsonConvert.SerializeObject(eTag));
-                // HttpContext.Current.Response.Headers.Add(ETAG_HEADER, eTag);
 
                 if (HttpContext.Current.Request.Headers.Get(ETagHelper.MATCH_HEADER) != null && HttpContext.Current.Request.Headers[ETagHelper.MATCH_HEADER].Trim('"') == eTag)
                     return new StatusCodeResult(HttpStatusCode.NotModified, new HttpRequestMessage());
@@ -208,32 +177,38 @@ namespace RentApp.Controllers
             }
         }
 
-       
+        [Authorize(Roles = "Admin, AppUser")]
+        [HttpGet]
+        [Route("getUserById/{userId}")]
+        [ResponseType(typeof(AppUser))]
+        public IHttpActionResult GetAppUserById(int userId)
+        {
+            try
+            {
 
-        //[HttpPost]
-        //[Route("addAppUser")]
-        //[ResponseType(typeof(AppUser))]
-        //public IHttpActionResult addAppUser([FromBody]AppUser appUser)
-        //{
-        //    //if (!ModelState.IsValid)
-        //    //{
-        //    //    return BadRequest(ModelState);
-        //    //}
-           
-        //    AppUser hj = _unitOfWork.AppUsers.Find(u => u.UserId == 1).FirstOrDefault();
-        //    _unitOfWork.AppUsers.Add(appUser);
+                var appUser = _unitOfWork.AppUsers.Find(x => x.UserId == userId).FirstOrDefault();
 
-        //    try
-        //    {
-        //        int a=_unitOfWork.Complete();
-        //    }
-        //    catch (DbUpdateConcurrencyException)
-        //    {
-        //        return BadRequest("Cannot refresh average grade.");
-        //    }
 
-        //    return Ok(appUser);
-        //}
+                var jsonObj = JsonConvert.SerializeObject(appUser, Formatting.None, setting);
+                var eTag = ETagHelper.GetETag(Encoding.UTF8.GetBytes(jsonObj));
+                HttpContext.Current.Response.Headers.Add("Access-Control-Expose-Headers", ETagHelper.ETAG_HEADER);
+                HttpContext.Current.Response.Headers.Add(ETagHelper.ETAG_HEADER, JsonConvert.SerializeObject(eTag));
+
+                if (HttpContext.Current.Request.Headers.Get(ETagHelper.MATCH_HEADER) != null && HttpContext.Current.Request.Headers[ETagHelper.MATCH_HEADER].Trim('"') == eTag)
+                    return new StatusCodeResult(HttpStatusCode.NotModified, new HttpRequestMessage());
+
+
+
+                return Ok(appUser);
+            }
+            catch
+            {
+                return BadRequest("Data could not be retrieved, try to relog.");
+            }
+        }
+
+
+        
 
         [HttpPost]
         [Route("editAppUser")]
@@ -245,15 +220,18 @@ namespace RentApp.Controllers
             string imageName = null;
 
 
-            //RADBContext db = new RADBContext();
             AppUser appUser;
             try
             {
                 var username = User.Identity.Name;
 
                 var user = _unitOfWork.AppUsers.Find(u => u.Email == username).FirstOrDefault();
+                if (user == null)
+                {
+                    return BadRequest("Data could not be retrieved, try to relog.");
+                }
                 appUser = user;
-               
+
             }
             catch
             {
@@ -261,52 +239,63 @@ namespace RentApp.Controllers
             }
 
 
-            var eTag = ETagHelper.GetETag(Encoding.UTF8.GetBytes(appUser.ToString()));
-            HttpContext.Current.Response.Headers.Add("Access-Control-Expose-Headers", ETagHelper.ETAG_HEADER);
-            HttpContext.Current.Response.Headers.Add(ETagHelper.ETAG_HEADER, JsonConvert.SerializeObject(eTag));
-            //HttpContext.Current.Response.Headers.Add(ETAG_HEADER, eTag);
+            var jsonObj = JsonConvert.SerializeObject(appUser, Formatting.None, setting);
+            var eTag = ETagHelper.GetETag(Encoding.UTF8.GetBytes(jsonObj));
+
+
 
             if (HttpContext.Current.Request.Headers.Get(ETagHelper.MATCH_HEADER) == null || HttpContext.Current.Request.Headers[ETagHelper.MATCH_HEADER].Trim('"') != eTag)
             {
+                HttpContext.Current.Response.Headers.Add("Access-Control-Expose-Headers", ETagHelper.ETAG_HEADER);
+                HttpContext.Current.Response.Headers.Add(ETagHelper.ETAG_HEADER, JsonConvert.SerializeObject(eTag));
+
                 return new StatusCodeResult(HttpStatusCode.PreconditionFailed, new HttpRequestMessage());
 
             }
 
-            appUser.FullName = httpRequest["FullName"];
+            appUser.FullName = httpRequest["FullName"].Trim();
             appUser.BirthDate = DateTime.Parse(httpRequest["BirthDate"]);
-            appUser.Email = httpRequest["Email"];
+            appUser.Email = httpRequest["Email"].Trim();
             appUser.ProfileEdited = true;
 
             if (appUser.DocumentPicture == null || appUser.DocumentPicture == "")
             {
                 var postedFile = httpRequest.Files["Image"];
-                imageName = new string(Path.GetFileNameWithoutExtension(postedFile.FileName).Take(10).ToArray()).Replace(" ", "-");
-                imageName = imageName + DateTime.Now.ToString("yymmssfff") + Path.GetExtension(postedFile.FileName);
-                var filePath = HttpContext.Current.Server.MapPath("~/Images/" + imageName);
-                //postedFile.SaveAs(filePath);
-                appUser.DocumentPicture = imageName;
-
-             
-
-                byte[] fileData = null;
-                using (var binaryReader = new BinaryReader(postedFile.InputStream))
+                if (postedFile != null)
                 {
-                    fileData = binaryReader.ReadBytes(postedFile.ContentLength);
-                }
-                //postedFile.InputStream.Write(file,0,postedFile.ContentLength);
+                    imageName = new string(Path.GetFileNameWithoutExtension(postedFile.FileName).Take(10).ToArray()).Replace(" ", "-");
+                    imageName = imageName + DateTime.Now.ToString("yymmssfff") + Path.GetExtension(postedFile.FileName);
+                    var filePath = HttpContext.Current.Server.MapPath("~/Images/" + imageName);
 
-                string eSecretKey = SecretKey.LoadKey(HttpRuntime.AppDomainAppPath + "Images\\SecretKey.txt");
-                AES_Symm_Algorithm.EncryptFile(fileData, filePath, eSecretKey);
+                    appUser.DocumentPicture = imageName;
+
+
+
+                    byte[] fileData = null;
+                    using (var binaryReader = new BinaryReader(postedFile.InputStream))
+                    {
+                        fileData = binaryReader.ReadBytes(postedFile.ContentLength);
+                    }
+
+
+                    string eSecretKey = SecretKey.LoadKey(HttpRuntime.AppDomainAppPath + "Images\\SecretKey.txt");
+                    AES_Symm_Algorithm.EncryptFile(fileData, filePath, eSecretKey);
+                }
             }
 
-           
+            jsonObj = JsonConvert.SerializeObject(appUser, Formatting.None, setting);
+            eTag = ETagHelper.GetETag(Encoding.UTF8.GetBytes(jsonObj));
+
+            HttpContext.Current.Response.Headers.Add("Access-Control-Expose-Headers", ETagHelper.ETAG_HEADER);
+            HttpContext.Current.Response.Headers.Add(ETagHelper.ETAG_HEADER, JsonConvert.SerializeObject(eTag));
 
             _unitOfWork.AppUsers.Update(appUser);
             _unitOfWork.Complete();
 
-            return Ok("User edited");
+            return Ok(appUser);
         }
 
+        [Authorize(Roles = "Admin, AppUser")]
         [HttpGet]
         [Route("deleteUser/{userId}")]
         public IHttpActionResult DeleteUser(int userId)
@@ -324,10 +313,19 @@ namespace RentApp.Controllers
                     File.Delete(HttpRuntime.AppDomainAppPath + "Images\\" + appUser.DocumentPicture);
                 }
 
+                List<Order> source = _unitOfWork.Orders.Find(x=>x.UserId== appUser.UserId).ToList();
+
+                foreach (Order o in source)
+                {
+                    _unitOfWork.Orders.Remove(o);
+                    _unitOfWork.Complete();
+                }
+                
+
                 _unitOfWork.AppUsers.Remove(appUser);
                 _unitOfWork.Complete();
             }
-            catch
+            catch(Exception e)
             {
                 return BadRequest("User could not be deleted");
             }
@@ -338,35 +336,49 @@ namespace RentApp.Controllers
         [HttpGet]
         [Route("activateUser/{userId}/{activated}")]
         [ResponseType(typeof(AppUser))]
-        public IHttpActionResult ActivateUser(int userId,bool activated)
+        public IHttpActionResult ActivateUser(int userId, bool activated)
         {
+
 
             AppUser appUser = _unitOfWork.AppUsers.Get(userId);
             if (appUser == null)
             {
-                return NotFound();
+                return BadRequest("User does not exist");
             }
-            
+
+            var jsonObj = JsonConvert.SerializeObject(appUser, Formatting.None, setting);
+            var eTag = ETagHelper.GetETag(Encoding.UTF8.GetBytes(jsonObj));
+
+
+            if (HttpContext.Current.Request.Headers.Get(ETagHelper.MATCH_HEADER) == null || HttpContext.Current.Request.Headers[ETagHelper.MATCH_HEADER].Trim('"') != eTag)
+            {
+                HttpContext.Current.Response.Headers.Add("Access-Control-Expose-Headers", ETagHelper.ETAG_HEADER);
+                HttpContext.Current.Response.Headers.Add(ETagHelper.ETAG_HEADER, JsonConvert.SerializeObject(eTag));
+                return new StatusCodeResult(HttpStatusCode.PreconditionFailed, new HttpRequestMessage());
+
+            }
+
+
             MailMessage mail = new MailMessage("easyrent.e3@gmail.com", "easyrent.e3@gmail.com");
             SmtpClient client = new SmtpClient();
             client.Port = 587;
             client.DeliveryMethod = SmtpDeliveryMethod.Network;
             client.UseDefaultCredentials = false;
-            client.Credentials = new NetworkCredential("easyrent.e3@gmail.com", "pusgse394");
+            client.Credentials = new NetworkCredential("easyrent.e3@gmail.com", "e3942014pusgs2018");
             client.Host = "smtp.gmail.com";
             client.EnableSsl = true;
             mail.From = new MailAddress("easyrent.e3@gmail.com");
             mail.To.Add(appUser.Email);
-            
+
 
 
             if (activated)
             {
                 appUser.Activated = true;
-                
+
                 mail.Subject = "Profile approved";
                 mail.Body = "Your profile was approved by our administrators!";
-              
+
             }
             else
             {
@@ -374,7 +386,14 @@ namespace RentApp.Controllers
 
                 mail.Subject = "Profile wasn't approved";
                 mail.Body = "Unfortunately your profile wasn't approved. Try changing your personal information.";
-               
+
+                if (File.Exists(HttpRuntime.AppDomainAppPath + "Images\\" + appUser.DocumentPicture))
+                {
+                    File.Delete(HttpRuntime.AppDomainAppPath + "Images\\" + appUser.DocumentPicture);
+
+                    appUser.DocumentPicture = null;
+                }
+
             }
             appUser.ProfileEdited = false;
 
@@ -392,19 +411,28 @@ namespace RentApp.Controllers
 
             }
 
+            jsonObj = JsonConvert.SerializeObject(appUser, Formatting.None, setting);
+            eTag = ETagHelper.GetETag(Encoding.UTF8.GetBytes(jsonObj));
+            HttpContext.Current.Response.Headers.Add("Access-Control-Expose-Headers", ETagHelper.ETAG_HEADER);
+            HttpContext.Current.Response.Headers.Add(ETagHelper.ETAG_HEADER, JsonConvert.SerializeObject(eTag));
+
             return Ok(appUser);
         }
         [HttpGet]
         [Route("canUserOrder")]
         public IHttpActionResult CanUserOrder()
         {
-            RADBContext db = new RADBContext();
+            AppUser appUser;
             try
             {
                 var username = User.Identity.Name;
 
-                var user = db.Users.Where(u => u.UserName == username).Include(a => a.AppUser).First();
-                var appUser = user.AppUser;
+                var user = _unitOfWork.AppUsers.Find(u => u.Email == username).FirstOrDefault();
+                if (user == null)
+                {
+                    return BadRequest("Data could not be retrieved, try to relog.");
+                }
+                appUser = user;
                 if (appUser.Activated)
                 {
                     return Ok(true);
@@ -419,6 +447,5 @@ namespace RentApp.Controllers
                 return BadRequest("User not found, try to relog");
             }
         }
-        
     }
 }

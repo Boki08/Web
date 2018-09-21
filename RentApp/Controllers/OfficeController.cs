@@ -15,14 +15,16 @@ using System.Web;
 using System.Web.Http;
 using System.Web.Http.Description;
 using System.Web.Http.Results;
+using System.Web.Script.Serialization;
 
 namespace RentApp.Controllers
 {
     [RoutePrefix("api/office")]
     public class OfficeController : ApiController
     {
+
+        JsonSerializerSettings setting = new JsonSerializerSettings { ReferenceLoopHandling = ReferenceLoopHandling.Ignore };
         private readonly IUnitOfWork _unitOfWork;
-        //readonly IUnitOfWork unitOfWork = new DemoUnitOfWork(new RADBContext());
 
         public OfficeController(IUnitOfWork unitOfWork)
         {
@@ -95,7 +97,7 @@ namespace RentApp.Controllers
 
         [HttpGet]
         [Route("getOffice/{officeID}")]
-        public IHttpActionResult GetServiceOffice( int officeID)////ne koristi se?
+        public IHttpActionResult GetServiceOffice( int officeID)
         {
             
 
@@ -113,10 +115,11 @@ namespace RentApp.Controllers
                 return BadRequest("Office does not exist");
             }
 
-            var eTag = ETagHelper.GetETag(Encoding.UTF8.GetBytes(office.ToString()));
+            var jsonObj = JsonConvert.SerializeObject(office, Formatting.None, setting);
+            var eTag = ETagHelper.GetETag(Encoding.UTF8.GetBytes(jsonObj));
             HttpContext.Current.Response.Headers.Add("Access-Control-Expose-Headers", ETagHelper.ETAG_HEADER);
             HttpContext.Current.Response.Headers.Add(ETagHelper.ETAG_HEADER, JsonConvert.SerializeObject(eTag));
-            // HttpContext.Current.Response.Headers.Add(ETAG_HEADER, eTag);
+
 
             if (HttpContext.Current.Request.Headers.Get(ETagHelper.MATCH_HEADER) != null && HttpContext.Current.Request.Headers[ETagHelper.MATCH_HEADER].Trim('"') == eTag)
                 return new StatusCodeResult(HttpStatusCode.NotModified, new HttpRequestMessage());
@@ -166,7 +169,7 @@ namespace RentApp.Controllers
 
 
             Office office = new Office();
-            office.Address = httpRequest["Address"];
+            office.Address = httpRequest["Address"].Trim();
 
             var numberFormat = (System.Globalization.NumberFormatInfo)System.Globalization.CultureInfo.InstalledUICulture.NumberFormat.Clone();
             
@@ -213,20 +216,21 @@ namespace RentApp.Controllers
             }
 
 
-            var eTag = ETagHelper.GetETag(Encoding.UTF8.GetBytes(office.ToString()));
-            HttpContext.Current.Response.Headers.Add("Access-Control-Expose-Headers", ETagHelper.ETAG_HEADER);
-            HttpContext.Current.Response.Headers.Add(ETagHelper.ETAG_HEADER, JsonConvert.SerializeObject(eTag));
-            //HttpContext.Current.Response.Headers.Add(ETAG_HEADER, eTag);
+           var  jsonObj = JsonConvert.SerializeObject(office, Formatting.None, setting);
+            var eTag = ETagHelper.GetETag(Encoding.UTF8.GetBytes(jsonObj));
+
 
             if (HttpContext.Current.Request.Headers.Get(ETagHelper.MATCH_HEADER) == null || HttpContext.Current.Request.Headers[ETagHelper.MATCH_HEADER].Trim('"') != eTag)
             {
+                HttpContext.Current.Response.Headers.Add("Access-Control-Expose-Headers", ETagHelper.ETAG_HEADER);
+                HttpContext.Current.Response.Headers.Add(ETagHelper.ETAG_HEADER, JsonConvert.SerializeObject(eTag));
                 return new StatusCodeResult(HttpStatusCode.PreconditionFailed, new HttpRequestMessage());
 
             }
 
             string imageName = null;
 
-            office.Address = httpRequest["Address"];
+            office.Address = httpRequest["Address"].Trim();
 
             var numberFormat = (System.Globalization.NumberFormatInfo)System.Globalization.CultureInfo.InstalledUICulture.NumberFormat.Clone();
 
@@ -234,7 +238,7 @@ namespace RentApp.Controllers
 
             office.Latitude = double.Parse(httpRequest["Latitude"], numberFormat);
             office.Longitude = double.Parse(httpRequest["Longitude"], numberFormat);
-            //office.RentServiceId = Convert.ToInt32(httpRequest["RentServiceId"]);
+         
 
             try
             {
@@ -248,19 +252,31 @@ namespace RentApp.Controllers
 
 
             var postedFile = httpRequest.Files["Picture"];
-            imageName = new string(Path.GetFileNameWithoutExtension(postedFile.FileName).Take(10).ToArray()).Replace(" ", "-");
-
-            if (office.Picture!= imageName && File.Exists(HttpRuntime.AppDomainAppPath + "Images\\" + office.Picture))
+            if (postedFile != null)
             {
-                File.Delete(HttpRuntime.AppDomainAppPath + "Images\\" + office.Picture);
+                imageName = new string(Path.GetFileNameWithoutExtension(postedFile.FileName).Take(10).ToArray()).Replace(" ", "-");
 
-                imageName = imageName + DateTime.Now.ToString("yymmssfff") + Path.GetExtension(postedFile.FileName);
-                var filePath = HttpContext.Current.Server.MapPath("~/Images/" + imageName);
-                postedFile.SaveAs(filePath);
-                office.Picture = imageName;
+                if (office.Picture != imageName && File.Exists(HttpRuntime.AppDomainAppPath + "Images\\" + office.Picture))
+                {
+
+                    if (File.Exists(HttpRuntime.AppDomainAppPath + "Images\\" + office.Picture))
+                    {
+                        File.Delete(HttpRuntime.AppDomainAppPath + "Images\\" + office.Picture);
+                    }
+                    
+
+                    imageName = imageName + DateTime.Now.ToString("yymmssfff") + Path.GetExtension(postedFile.FileName);
+                    var filePath = HttpContext.Current.Server.MapPath("~/Images/" + imageName);
+                    postedFile.SaveAs(filePath);
+                    office.Picture = imageName;
+                }
             }
 
-            
+            jsonObj = JsonConvert.SerializeObject(office, Formatting.None, setting);
+             eTag = ETagHelper.GetETag(Encoding.UTF8.GetBytes(jsonObj));
+            HttpContext.Current.Response.Headers.Add("Access-Control-Expose-Headers", ETagHelper.ETAG_HEADER);
+            HttpContext.Current.Response.Headers.Add(ETagHelper.ETAG_HEADER, JsonConvert.SerializeObject(eTag));
+
             return Created("Office was edited", office);
         }
 

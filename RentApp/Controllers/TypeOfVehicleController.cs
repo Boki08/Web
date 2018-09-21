@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using RentApp.ETag;
 using RentApp.Models.Entities;
 using RentApp.Persistance.UnitOfWork;
 using System;
@@ -6,14 +7,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Web;
 using System.Web.Http;
+using System.Web.Http.Results;
 
 namespace RentApp.Controllers
 {
     [RoutePrefix("api/typeOfVehicle")]
     public class TypeOfVehicleController : ApiController
     {
+        JsonSerializerSettings setting = new JsonSerializerSettings { ReferenceLoopHandling = ReferenceLoopHandling.Ignore };
         private readonly IUnitOfWork _unitOfWork;
         
 
@@ -90,6 +94,8 @@ namespace RentApp.Controllers
                 }
             }
 
+            type.Type = type.Type.Trim();
+
             _unitOfWork.TypesOfVehicles.Add(type);
             _unitOfWork.Complete();
 
@@ -104,11 +110,89 @@ namespace RentApp.Controllers
             TypeOfVehicle typeOfVehicle = _unitOfWork.TypesOfVehicles.Get(typeId);
             if (typeOfVehicle == null)
             {
-                return NotFound();
+                return BadRequest("This Vehicle Type cant be found");
             }
 
-            _unitOfWork.TypesOfVehicles.Remove(typeOfVehicle);
-            _unitOfWork.Complete();
+           
+
+            try
+            {
+                _unitOfWork.TypesOfVehicles.Remove(typeOfVehicle);
+                _unitOfWork.Complete();
+            }
+            catch
+            {
+                return BadRequest("Vehicle Type can't be added");
+            }
+
+            return Ok(typeOfVehicle);
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpGet]
+        [Route("getTypeOfVehicle/{typeId}")]
+        public IHttpActionResult GetTypeOfVehicle(int typeId)
+        {
+            TypeOfVehicle typeOfVehicle = _unitOfWork.TypesOfVehicles.Get(typeId);
+            if (typeOfVehicle == null)
+            {
+                return BadRequest("This Vehicle Type cant be found");
+            }
+
+            var jsonObj = JsonConvert.SerializeObject(typeOfVehicle, Formatting.None, setting);
+            var eTag = ETagHelper.GetETag(Encoding.UTF8.GetBytes(jsonObj));
+
+            HttpContext.Current.Response.Headers.Add("Access-Control-Expose-Headers", ETagHelper.ETAG_HEADER);
+            HttpContext.Current.Response.Headers.Add(ETagHelper.ETAG_HEADER, JsonConvert.SerializeObject(eTag));
+
+            if (HttpContext.Current.Request.Headers.Get(ETagHelper.MATCH_HEADER) != null && HttpContext.Current.Request.Headers[ETagHelper.MATCH_HEADER].Trim('"') == eTag)
+                return new StatusCodeResult(HttpStatusCode.NotModified, new HttpRequestMessage());
+
+            return Ok(typeOfVehicle);
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        [Route("editTypeOfVehicle")]
+        public IHttpActionResult EditTypeOfVehicle(TypeOfVehicle type)
+        {
+            TypeOfVehicle typeOfVehicle = _unitOfWork.TypesOfVehicles.Get(type.TypeId);
+            if (typeOfVehicle == null)
+            {
+                return BadRequest("This Vehicle Type can't be found");
+            }
+
+            var jsonObj = JsonConvert.SerializeObject(typeOfVehicle, Formatting.None, setting);
+            var eTag = ETagHelper.GetETag(Encoding.UTF8.GetBytes(jsonObj));
+
+
+
+            if (HttpContext.Current.Request.Headers.Get(ETagHelper.MATCH_HEADER) == null || HttpContext.Current.Request.Headers[ETagHelper.MATCH_HEADER].Trim('"') != eTag)
+            {
+                HttpContext.Current.Response.Headers.Add("Access-Control-Expose-Headers", ETagHelper.ETAG_HEADER);
+                HttpContext.Current.Response.Headers.Add(ETagHelper.ETAG_HEADER, JsonConvert.SerializeObject(eTag));
+
+                return new StatusCodeResult(HttpStatusCode.PreconditionFailed, new HttpRequestMessage());
+
+            }
+
+            typeOfVehicle.Type = type.Type.Trim();
+
+            try
+            {
+                _unitOfWork.TypesOfVehicles.Update(typeOfVehicle);
+                _unitOfWork.Complete();
+            }
+            catch
+            {
+                return BadRequest("Vehicle Type can't be edited");
+            }
+
+            jsonObj = JsonConvert.SerializeObject(typeOfVehicle, Formatting.None, setting);
+            eTag = ETagHelper.GetETag(Encoding.UTF8.GetBytes(jsonObj));
+
+            HttpContext.Current.Response.Headers.Add("Access-Control-Expose-Headers", ETagHelper.ETAG_HEADER);
+            HttpContext.Current.Response.Headers.Add(ETagHelper.ETAG_HEADER, JsonConvert.SerializeObject(eTag));
 
             return Ok(typeOfVehicle);
         }
