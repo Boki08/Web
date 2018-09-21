@@ -11,6 +11,8 @@ namespace RentApp.Models.Entities
     {
         [Key]
         public int RentServiceId { get; set; }
+        [ForeignKey("User")]
+        public int UserId { get; set; }
         [Required]
         public string Name { get; set; }
         [Required]
@@ -25,6 +27,7 @@ namespace RentApp.Models.Entities
         public bool ServiceEdited { get; set; }
         public double Grade { get; set; }
 
+        public virtual AppUser User { get; set; }
         public List<Order> Orders { get; set; }
         public List<Office> Offices { get; set; }
         public List<Vehicle> Vehicles { get; set; }

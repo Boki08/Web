@@ -186,7 +186,7 @@ namespace RentApp.Controllers
             try
             {
 
-                var appUser = _unitOfWork.AppUsers.Find(x => x.UserId == userId).FirstOrDefault();
+                var appUser = _unitOfWork.AppUsers.Get(userId);
 
 
                 var jsonObj = JsonConvert.SerializeObject(appUser, Formatting.None, setting);
@@ -289,8 +289,18 @@ namespace RentApp.Controllers
             HttpContext.Current.Response.Headers.Add("Access-Control-Expose-Headers", ETagHelper.ETAG_HEADER);
             HttpContext.Current.Response.Headers.Add(ETagHelper.ETAG_HEADER, JsonConvert.SerializeObject(eTag));
 
-            _unitOfWork.AppUsers.Update(appUser);
-            _unitOfWork.Complete();
+          
+
+            try
+            {
+                _unitOfWork.AppUsers.Update(appUser);
+                _unitOfWork.Complete();
+
+            }
+            catch
+            {
+                return BadRequest("Profile could not be edited.");
+            }
 
             return Ok(appUser);
         }
@@ -300,14 +310,15 @@ namespace RentApp.Controllers
         [Route("deleteUser/{userId}")]
         public IHttpActionResult DeleteUser(int userId)
         {
-            AppUser appUser = _unitOfWork.AppUsers.Get(userId);
-            if (appUser == null)
-            {
-                return NotFound();
-            }
-
+            AppUser appUser;
             try
             {
+                appUser = _unitOfWork.AppUsers.Get(userId);
+                if (appUser == null)
+                {
+                    return BadRequest("User could not found.");
+                }
+
                 if (File.Exists(HttpRuntime.AppDomainAppPath + "Images\\" + appUser.DocumentPicture))
                 {
                     File.Delete(HttpRuntime.AppDomainAppPath + "Images\\" + appUser.DocumentPicture);
@@ -325,7 +336,7 @@ namespace RentApp.Controllers
                 _unitOfWork.AppUsers.Remove(appUser);
                 _unitOfWork.Complete();
             }
-            catch(Exception e)
+            catch
             {
                 return BadRequest("User could not be deleted");
             }
@@ -399,8 +410,20 @@ namespace RentApp.Controllers
 
 
 
-            _unitOfWork.AppUsers.Update(appUser);
-            _unitOfWork.Complete();
+           
+
+
+            try
+            {
+                _unitOfWork.AppUsers.Update(appUser);
+                _unitOfWork.Complete();
+
+            }
+            catch
+            {
+                return BadRequest(string.Format("User could not be {0}", activated?"activated":"deactivated"));
+            }
+
 
             try
             {

@@ -32,12 +32,19 @@ namespace RentApp.Controllers
         [ResponseType(typeof(Comment))]
         public IHttpActionResult GetUserComment(int orderId, int userId)
         {
-            Comment comment = unitOfWork.Comments.Find(x => x.OrderId == orderId).FirstOrDefault();
-            if (comment == null)
+            Comment comment;
+            try
             {
-                return NotFound();
+                comment = unitOfWork.Comments.Find(x => x.OrderId == orderId).FirstOrDefault();
+                if (comment == null)
+                {
+                    return BadRequest("Comment could not be found.");
+                }
             }
-
+            catch
+            {
+                return BadRequest("Comment could not be found.");
+            }
             return Ok(comment);
         }
 
@@ -47,19 +54,28 @@ namespace RentApp.Controllers
         [ResponseType(typeof(string))]
         public IHttpActionResult GetCanUserComment(int orderId, int userId)
         {
-            Comment comment = unitOfWork.Comments.Find(x => x.OrderId == orderId).FirstOrDefault();
-
-            if (comment == null)
+            Comment comment;
+            try
             {
-                Order order = unitOfWork.Orders.Find(x => x.OrderId == orderId).FirstOrDefault();
-                if (order.ReturnDate <= DateTime.Now)
+                comment = unitOfWork.Comments.Find(x => x.OrderId == orderId).FirstOrDefault();
+                if (comment == null)
                 {
-                    return Ok("canComment");
+                    Order order = unitOfWork.Orders.Get(orderId);
+                    if (order.ReturnDate <= DateTime.Now)
+                    {
+                        return Ok("canComment");
+                    }
+                    else
+                    {
+                        return Ok("can'tCommentYet");
+                    }
                 }
-                else
-                {
-                    return Ok("can'tCommentYet");
-                }
+
+
+            }
+            catch
+            {
+                return BadRequest("Comment could not be found.");
             }
 
             return Ok("commentExists");
@@ -95,15 +111,43 @@ namespace RentApp.Controllers
             
             comment.PostedDate = DateTime.Now;
 
-            Order order = unitOfWork.Orders.GetWithVehicles(comment.OrderId);
+            Order order;
+            try
+            {
+                order = unitOfWork.Orders.GetWithVehicles(comment.OrderId);
+                if (order == null)
+                {
+                    return BadRequest("Order could not be found.");
+                }
+              
+            }
+            catch
+            {
+                return BadRequest("Order could not be found.");
+            }
 
-            if(order.ReturnDate> comment.PostedDate)
+            if (order.ReturnDate > comment.PostedDate)
             {
                 return BadRequest("Can't comment before the return date");
             }
 
+            RentService service;
 
-            RentService service = unitOfWork.RentServices.GetServiceWithComments(order.Vehicle.RentServiceId);
+
+            try
+            {
+                service = unitOfWork.RentServices.GetServiceWithComments(order.Vehicle.RentServiceId);
+                if (service == null)
+                {
+                    return BadRequest("Rent Service could not be found.");
+                }
+
+            }
+            catch
+            {
+                return BadRequest("Rent Service could not be found.");
+            }
+
 
             int numOfComments = service.Comments.Count;
             double sumGrades = 0;
@@ -125,9 +169,10 @@ namespace RentApp.Controllers
             service.Comments.Add(comment);
 
 
-            unitOfWork.RentServices.Update(service);
+            
             try
             {
+                unitOfWork.RentServices.Update(service);
                 unitOfWork.Complete();
             }
             catch 

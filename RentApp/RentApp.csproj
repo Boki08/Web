@@ -448,6 +448,14 @@
     <Compile Include="Migrations\201809210012185_CommentUserId.Designer.cs">
       <DependentUpon>201809210012185_CommentUserId.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201809211334348_UserServices.cs" />
+    <Compile Include="Migrations\201809211334348_UserServices.Designer.cs">
+      <DependentUpon>201809211334348_UserServices.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201809211344530_ServiceUserId.cs" />
+    <Compile Include="Migrations\201809211344530_ServiceUserId.Designer.cs">
+      <DependentUpon>201809211344530_ServiceUserId.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\AccountBindingModels.cs" />
     <Compile Include="Models\AccountViewModels.cs" />
@@ -645,6 +653,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201809210012185_CommentUserId.resx">
       <DependentUpon>201809210012185_CommentUserId.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201809211334348_UserServices.resx">
+      <DependentUpon>201809211334348_UserServices.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201809211344530_ServiceUserId.resx">
+      <DependentUpon>201809211344530_ServiceUserId.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>

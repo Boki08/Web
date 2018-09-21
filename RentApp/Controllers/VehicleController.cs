@@ -41,18 +41,18 @@ namespace RentApp.Controllers
        
         
         [HttpGet]
-        [Route("getVehicle/{id}")]
+        [Route("getVehicle/{vehicleId}")]
         [ResponseType(typeof(AppUser))]
-        public IHttpActionResult GetVehicle(int id)
+        public IHttpActionResult GetVehicle(int vehicleId)
         {
             Vehicle vehicle;
             try
             {
-                vehicle = _unitOfWork.Vehicles.Find(u => u.VehicleId == id).FirstOrDefault();
+                vehicle = _unitOfWork.Vehicles.Get(vehicleId);
             }
             catch 
             {
-                return NotFound();
+                return BadRequest("Vehicle does not exist");
             }
             if (vehicle == null)
             {
@@ -82,7 +82,7 @@ namespace RentApp.Controllers
 
             if (source == null)
             {
-                return NotFound();
+                return BadRequest("There are no Vehicles");
             }
             else if (source.Count<1)
             {
@@ -128,7 +128,7 @@ namespace RentApp.Controllers
 
             if (source == null)
             {
-                return NotFound();
+                return BadRequest("There are no Vehicles");
             }
             else if (source.Count < 1)
             {
@@ -415,7 +415,7 @@ namespace RentApp.Controllers
             Vehicle vehicle = _unitOfWork.Vehicles.Get(vehicleId);
             if (vehicle == null)
             {
-                return NotFound();
+                return BadRequest("Vehicle could not be found");
             }
 
             try

@@ -19,6 +19,7 @@ namespace RentApp.Controllers
     public class OrderController : ApiController
     {
         private readonly IUnitOfWork unitOfWork;
+        private static readonly Object orderLock = new Object();
 
         public OrderController(IUnitOfWork unitOfWork)
         {
@@ -32,73 +33,74 @@ namespace RentApp.Controllers
         public IHttpActionResult PostOrder(Order order)
         {
 
-
-            if(order.DepartureDate.Date<DateTime.Now.Date || order.ReturnDate<order.DepartureDate || order.ReturnDate < DateTime.Now)
+            lock (orderLock)
             {
-                return BadRequest("You can't add Order with these dates!");
-            }
-
-            Vehicle vehicle= unitOfWork.Vehicles.Find(v=>v.VehicleId==order.VehicleId).FirstOrDefault();
-            if (vehicle == null)
-            {
-                return BadRequest("Vehicle not found");
-            }
-
-            AppUser appUser;
-            try
-            {
-                var username = User.Identity.Name;
-
-
-                var user = unitOfWork.AppUsers.Find(u => u.Email == username).FirstOrDefault();
-                if (user == null)
+                if (order.DepartureDate.Date < DateTime.Now.Date || order.ReturnDate < order.DepartureDate || order.ReturnDate < DateTime.Now)
                 {
-                    return BadRequest("Data could not be retrieved, try to relog.");
+                    return BadRequest("You can't add Order with these dates!");
                 }
-                appUser = user;
 
-            }
-            catch
-            {
-                return BadRequest("User not found, try to relog");
-            }
+                Vehicle vehicle = unitOfWork.Vehicles.Get( order.VehicleId);
+                if (vehicle == null)
+                {
+                    return BadRequest("Vehicle not found");
+                }
 
-            if (appUser == null)
-            {
-                return BadRequest("User not found, try to relog");
-            }
-            else if (appUser.Activated==false)
-            {
-                return BadRequest("Your profile is not activated");
-            }
-            order.UserId = appUser.UserId;
+                AppUser appUser;
+                try
+                {
+                    var username = User.Identity.Name;
 
-            var hours = (order.ReturnDate - order.DepartureDate).TotalHours;
-            order.Price = vehicle.HourlyPrice * hours;
 
-            if (vehicle.Available == true)
-            {
-                vehicle.Available = false;
-                unitOfWork.Vehicles.Update(vehicle);
-                unitOfWork.Complete();
-            }
-            else
-            {
-                return BadRequest("Vehicle isn't available.");
-            }
+                    var user = unitOfWork.AppUsers.Find(u => u.Email == username).FirstOrDefault();
+                    if (user == null)
+                    {
+                        return BadRequest("Data could not be retrieved, try to relog.");
+                    }
+                    appUser = user;
 
-            unitOfWork.Orders.Add(order);
-            try
-            {
-                unitOfWork.Complete();
+                }
+                catch
+                {
+                    return BadRequest("User not found, try to relog");
+                }
+
+                if (appUser == null)
+                {
+                    return BadRequest("User not found, try to relog");
+                }
+                else if (appUser.Activated == false)
+                {
+                    return BadRequest("Your profile is not activated");
+                }
+                order.UserId = appUser.UserId;
+
+                var hours = (order.ReturnDate - order.DepartureDate).TotalHours;
+                order.Price = vehicle.HourlyPrice * hours;
+
+                if (vehicle.Available == true)
+                {
+                    vehicle.Available = false;
+                    unitOfWork.Vehicles.Update(vehicle);
+                    unitOfWork.Complete();
+                }
+                else
+                {
+                    return BadRequest("Vehicle isn't available.");
+                }
+
+                unitOfWork.Orders.Add(order);
+                try
+                {
+                    unitOfWork.Complete();
+                }
+                catch
+                {
+                    return BadRequest("Cannot add new Order.");
+                }
+                return Created("Order was created", order);
             }
-            catch (DbUpdateConcurrencyException)
-            {
-                return BadRequest("Cannot add new Order.");
-            }
-            return Created("Order was created",order);
         }
-
         [Authorize(Roles = "AppUser")]
         [HttpGet]
         [Route("getAllUserOrders/{pageIndex}/{pageSize}")]
@@ -170,6 +172,7 @@ namespace RentApp.Controllers
         {
             int userId;
             AppUser appUser;
+            Order order;
             try
             {
                 var username = User.Identity.Name;
@@ -187,7 +190,24 @@ namespace RentApp.Controllers
             {
                 return BadRequest("User not found. Try to relog");
             }
-            Order order = unitOfWork.Orders.Find(x=>x.OrderId==orderId).FirstOrDefault();
+            try
+            {
+               
+
+                var order1 = unitOfWork.Orders.Get(orderId);
+                if (order1 == null)
+                {
+                    return BadRequest("Order does not exist.");
+                }
+                order = order1;
+               
+
+            }
+            catch
+            {
+                return BadRequest("Order could not be found.");
+            }
+
 
             Vehicle vehicle = order.Vehicle;
 

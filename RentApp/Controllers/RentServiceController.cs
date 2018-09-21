@@ -13,6 +13,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net.Mail;
 using System.Text;
 using System.Web;
 using System.Web.Http;
@@ -43,11 +44,11 @@ namespace RentApp.Controllers
             RentService service;
             try
             {
-                service = _unitOfWork.RentServices.Find(x => x.RentServiceId == serviceId).FirstOrDefault();
+                service = _unitOfWork.RentServices.Get( serviceId);
             }
             catch
             {
-                return NotFound();
+                return BadRequest("Rent Service does not exist");
             }
             if (service == null)
             {
@@ -111,7 +112,7 @@ namespace RentApp.Controllers
         [ResponseType(typeof(RentService))]
         public IHttpActionResult AddRentService()
         {
-
+            RADBContext db = new RADBContext();
             AppUser appUser;
             try
             {
@@ -153,6 +154,7 @@ namespace RentApp.Controllers
             service.Email = httpRequest["Email"].Trim();
             service.Activated = false;
             service.ServiceEdited = true;
+            service.UserId = appUser.UserId;
 
 
             if (service.Logo == null || service.Logo == "")
@@ -168,6 +170,10 @@ namespace RentApp.Controllers
             try
             {
                 _unitOfWork.RentServices.Add(service);
+                _unitOfWork.Complete();
+
+                appUser.RentServices.Add(service);
+                _unitOfWork.AppUsers.Update(appUser);
                 _unitOfWork.Complete();
             }
             catch
@@ -451,7 +457,7 @@ namespace RentApp.Controllers
             RentService rentService = _unitOfWork.RentServices.Get(serviceId);
             if (rentService == null)
             {
-                return NotFound();
+                return BadRequest("Rent Service could not be found.");
             }
 
             try
@@ -480,7 +486,7 @@ namespace RentApp.Controllers
             RentService rentService = _unitOfWork.RentServices.Get(serviceId);
             if (rentService == null)
             {
-                return NotFound();
+                return BadRequest("Rent Service does not exist");
             }
 
             var jsonObj = JsonConvert.SerializeObject(rentService, Formatting.None, setting);
@@ -509,10 +515,51 @@ namespace RentApp.Controllers
                 return BadRequest("Rent Service cound not be activated");
             }
 
-             jsonObj = JsonConvert.SerializeObject(rentService, Formatting.None, setting);
+
+            MailMessage mail = new MailMessage("easyrent.e3@gmail.com", "easyrent.e3@gmail.com");
+            SmtpClient client = new SmtpClient();
+            client.Port = 587;
+            client.DeliveryMethod = SmtpDeliveryMethod.Network;
+            client.UseDefaultCredentials = false;
+            client.Credentials = new NetworkCredential("easyrent.e3@gmail.com", "e3942014pusgs2018");
+            client.Host = "smtp.gmail.com";
+            client.EnableSsl = true;
+            mail.From = new MailAddress("easyrent.e3@gmail.com");
+            mail.To.Add(rentService.User.Email);
+
+
+
+            if (activated)
+            {
+               
+
+                mail.Subject = "Rent Service approved";
+                mail.Body = string.Format("Your Rent Service '{0}' was approved by our administrators!",rentService.Name);
+
+            }
+            else
+            {
+        
+
+                mail.Subject = "Rent Service wasn't approved";
+                mail.Body = string.Format("Unfortunately your Rent Service '{0}' wasn't approved!", rentService.Name);
+
+            }
+
+            try
+            {
+                client.Send(mail);
+            }
+            catch
+            {
+
+            }
+
+            jsonObj = JsonConvert.SerializeObject(rentService, Formatting.None, setting);
              eTag = ETagHelper.GetETag(Encoding.UTF8.GetBytes(jsonObj));
             HttpContext.Current.Response.Headers.Add("Access-Control-Expose-Headers", ETagHelper.ETAG_HEADER);
             HttpContext.Current.Response.Headers.Add(ETagHelper.ETAG_HEADER, JsonConvert.SerializeObject(eTag));
+
             return Ok(string.Format("Rent Service was {0}",activated==true?"activated":"deactivated"));
         }
     }

@@ -37,6 +37,7 @@ namespace RentApp.Controllers
         [Route("allServiceOffices/{pageIndex}/{pageSize}/{serviceID}")]
         public IHttpActionResult GetServiceOffices(int pageIndex, int pageSize, int serviceID)
         {
+
             var source = _unitOfWork.Offices.GetAll(pageIndex,  pageSize,  serviceID);
 
             if (source == null || source.Count() < 1)
@@ -85,7 +86,7 @@ namespace RentApp.Controllers
             }
             catch
             {
-                return NotFound();
+                return BadRequest("There are no Offices");
             }
             if (offices == null || offices.Count<1)
             {
@@ -104,11 +105,11 @@ namespace RentApp.Controllers
             Office office;
             try
             {
-                office = _unitOfWork.Offices.Find(x => x.OfficeId == officeID).FirstOrDefault();
+                office = _unitOfWork.Offices.Get( officeID);
             }
             catch 
             {
-                return NotFound();
+                return BadRequest("Office does not exist");
             }
             if (office == null)
             {
@@ -288,7 +289,7 @@ namespace RentApp.Controllers
             Office office = _unitOfWork.Offices.Get(officeId);
             if (office == null)
             {
-                return NotFound();
+                return BadRequest("Office does not exist");
             }
             try
             {

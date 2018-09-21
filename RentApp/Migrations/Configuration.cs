@@ -121,7 +121,7 @@ namespace RentApp.Migrations
             {
                 var store = new RoleStore<IdentityRole>(context);
                 var manager = new RoleManager<IdentityRole>(store);
-                var role = new IdentityRole { Name = "Manager" };
+                var role = new IdentityRole { Name = "manager" };
 
                 manager.Create(role);
             }
@@ -146,7 +146,7 @@ namespace RentApp.Migrations
 
                   u => u.FullName,
 
-                  new AppUser() { FullName = "Manager", Email = "manager@yahoo.com", BirthDate = DateTime.Parse("1/1/2000"), DocumentPicture = "123" }
+                  new AppUser() { FullName = "Manager", Email = "bojan.vasilic95@gmail.com", BirthDate = DateTime.Parse("1/1/2000"), DocumentPicture = "123" }
 
             );
             context.AppUsers.AddOrUpdate(
@@ -159,27 +159,27 @@ namespace RentApp.Migrations
 
             //rentServices
 
-            context.RentServices.AddOrUpdate(
+           // context.RentServices.AddOrUpdate(
 
-                p => p.Name,
+           //     p => p.Name,
 
-                new RentService() { Name = "Rent1", Email = "rent1@yahoo.com", Description="Description of the description",Grade=4,Logo="1234" }
+           //     new RentService() { Name = "Rent1", Email = "rent1@yahoo.com", Description="Description of the description",Grade=4,Logo="1234" }
 
-            );
-            context.RentServices.AddOrUpdate(
+           // );
+           // context.RentServices.AddOrUpdate(
 
-                p => p.Name,
+           //     p => p.Name,
 
-                new RentService() { Name = "Rent2", Email = "rent2@yahoo.com", Description = "Description of the description", Grade = 1, Logo = "1234" }
+           //     new RentService() { Name = "Rent2", Email = "rent2@yahoo.com", Description = "Description of the description", Grade = 1, Logo = "1234" }
 
-            );
-            context.RentServices.AddOrUpdate(
+           // );
+           // context.RentServices.AddOrUpdate(
 
-               p => p.Name,
+           //    p => p.Name,
 
-               new RentService() { Name = "Rent3", Email = "rent3@yahoo.com", Description = "Description of the description", Grade = 5, Logo = "1234" }
+           //    new RentService() { Name = "Rent3", Email = "rent3@yahoo.com", Description = "Description of the description", Grade = 5, Logo = "1234" }
 
-           );
+           //);
             //type
            // context.TypesOfVehicles.AddOrUpdate(
 
@@ -308,7 +308,7 @@ namespace RentApp.Migrations
             if (!context.Users.Any(u => u.UserName == "manager"))
             {
                 var _appUser = context.AppUsers.FirstOrDefault(a => a.FullName == "Manager");
-                var user = new RAIdentityUser() { Id = "manager", UserName = "manager", Email = "menager@yahoo.com", PasswordHash = RAIdentityUser.HashPassword("manager"), AppUserId = _appUser.UserId };
+                var user = new RAIdentityUser() { Id = "manager", UserName = "bojan.vasilic95@gmail.com", Email = "menager@yahoo.com", PasswordHash = RAIdentityUser.HashPassword("manager"), AppUserId = _appUser.UserId };
                 userManager.Create(user);
                 userManager.AddToRole(user.Id, "Manager");
             }
